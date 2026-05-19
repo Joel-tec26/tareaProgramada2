@@ -7,10 +7,45 @@ import re
 from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox, ttk
+import re
+import pickle
+archivoDonadores = "donadores.dat"
+
 
 # ingresar donadores
 
 # prosesamiento 
+def CargarDatosDesdeArchivo():
+    try:
+        with open(archivoDonadores, "rb") as archivo:
+            return pickle.load(archivo)
+    except FileNotFoundError:
+        return []
+    except (pickle.PickleError, EOFError):
+        return []
+
+def GuardarMatrizEnArchivo(matrizGuardar):
+    with open(archivoDonadores, "wb") as archivo:
+        pickle.dump(matrizGuardar, archivo)
+    return
+
+def BuscarDonador(cedulaTarget, matrizA_Buscar):
+    izquierda = 0
+    derecha = len(matrizA_Buscar) - 1
+    
+    while izquierda <= derecha:
+        medio = (izquierda + derecha) // 2
+        cedulaMedio = matrizA_Buscar[medio][0]
+        
+        if cedulaMedio == cedulaTarget:
+            return True, medio
+        elif cedulaMedio < cedulaTarget:
+            izquierda = medio + 1
+        else:
+            derecha = medio - 1
+            
+    return False, izquierda
+
 def CalcularEdad(fechaNacimientoStr):
     hoy = datetime.now()
     fechaNac = datetime.strptime(fechaNacimientoStr, "%d/%m/%Y")
@@ -55,6 +90,19 @@ def ObtenerRecomendacionSangre(tipoSangre):
         mensaje += "\nPor el tipo de sangre le recomendamos ver el video de: Particularidades de la sangre tipo A Responde diferente al estrés según la ciencia."
     return mensaje
 
+def ObtenerInformacionResaltadaSangre(tipoSangre):
+    tipoSangre = tipoSangre.upper()
+    recomendaciones = {
+        "A+": "se les recomienda que donen sangre entera y plaquetas.",
+        "A-": "se les recomienda que donen sangre entera y glóbulos rojos dobles.",
+        "B+": "pueden lograr el mayor impacto con donaciones de sangre entera y de glóbulos rojos dobles.",
+        "B-": "se les recomienda que donen sangre entera o plaquetas.",
+        "O+": "se les recomienda donar glóbulos rojos dobles y sangre entera.",
+        "O-": "se les recomienda donar glóbulos rojos dobles y sangre entera.",
+        "AB+": "se les recomienda hacer donaciones de plaquetas y de plasma.",
+        "AB-": "se les recomienda donar plaquetas y plasma."
+        }
+    
 # validaciones
 
 def ValidarCedula(cedula):
@@ -85,7 +133,7 @@ def ValidarPeso(pesoStr):
     
 # auxiliar
 
-def InsertarDonadorAux():
+def InsertarDonadorAux(matrizDonadores):
     def Registrar():
         cedula = entradaCedula.get().strip()
         nombre = entradaNombre.get().strip()
@@ -95,35 +143,49 @@ def InsertarDonadorAux():
         peso = entradaPeso.get().strip()
         telefono = entradaTelefono.get().strip()
         correo = entradaCorreo.get().strip()
-
-        # Validaciones consecutivas sin caídas
+        #  Validaciones
         if not ValidarCedula(cedula):
-            messagebox.showwarning("Aviso", "Formato de cédula incorrecto o inicia en cero.")
+            messagebox.showwarning("Aviso", "Formato de cédula incorrecto.\nDebe ser #-####-#### (ej. 2-0893-0750) y no puede iniciar con 0.")
             return
         if not nombre:
             messagebox.showwarning("Aviso", "El nombre completo es requerido.")
             return
         if not ValidarFechaNacimiento(fechaNac):
-            messagebox.showwarning("Aviso", "Fecha de nacimiento inválida. Use DD/MM/AAAA.")
+            messagebox.showwarning("Aviso", "Fecha de nacimiento inválida.\nDebe usar el formato DD/MM/AAAA (ej. 25/12/2000).")
             return
         if not ValidarPeso(peso):
-            messagebox.showwarning("Aviso", "El peso debe estar entre 51 y 119.")
+            messagebox.showwarning("Aviso", "El peso debe ser un número entero mayor a 50 y menor a 120.")
             return
         if not ValidarTelefono(telefono):
-            messagebox.showwarning("Aviso", "Formato de teléfono incorrecto.\nDebe ser ####-#### o ######## de 8 dígitos (ej. 61375404) y no puede iniciar con 0, 1, 3 o 5.")            
+            messagebox.showwarning("Aviso", "Formato de teléfono incorrecto.\nDebe ser de 8 dígitos (ej. 61375404) y no puede iniciar con 0, 1, 3 o 5.")
             return
         if not ValidarCorreo(correo):
-            messagebox.showwarning("Aviso", "Correo inválido o dominio no permitido.")
+            messagebox.showwarning("Aviso", "Correo no permitido.\nSolo se aceptan dominios: @costarricense.cr, @racsa.go.cr, @ccss.sa.cr o @gmail.com")
             return
 
-        # Procesamiento e inserción inicial
+        # Búsqueda Binaria para evitar duplicaciones
+        existe, posicion = BuscarDonador(cedula, matrizDonadores)
+        if existe:
+            messagebox.showwarning("Aviso", f"La cédula {cedula} ya se encuentra registrada en el sistema.")
+            return
+        nuevoRegistro = [cedula, nombre, fechaNac, tipoSangre, sexo, int(peso), telefono, correo]
+        matrizDonadores.insert(posicion, nuevoRegistro)
+        # Guardar el objeto completo usando pickle
+        GuardarMatrizEnArchivo(matrizDonadores)
+        #  textos para el mensaje
         msgEdad = ObtenerMensajeEdad(fechaNac)
         msgLugar = ObtenerLugarDonacion(cedula)
         msgPeso = ObtenerMensajePeso(peso)
-        msgSangre = ObtenerRecomendacionSangre(tipoSangre)
+        msgSangre = ObtenerInformacionResaltadaSangre(tipoSangre)
 
-        resultado = f"1. {msgEdad}\n\n2. {msgLugar}\n\n3. {msgPeso}\n\n4. {msgSangre}"
-        messagebox.showinfo("Información de la inserción inicial", resultado)
+        resultadoFluido = (
+            f"{msgEdad}\n\n"
+            f"{msgLugar}\n\n"
+            f"{msgPeso}\n\n"
+            f"{msgSangre}"
+        )
+        messagebox.showinfo("Información de la inserción inicial", resultadoFluido)
+        Limpiar()
 
     def Limpiar():
         entradaCedula.delete(0, tk.END)
@@ -138,12 +200,11 @@ def InsertarDonadorAux():
     def Regresar():
         ventana.destroy()
 
-    # Creación y configuración de la ventana principal
+    # Creación de la Interfaz con Tkinter
     ventana = tk.Tk()
     ventana.title("Insertar donador")
-    ventana.geometry("550x350")
+    ventana.geometry("550x360")
 
-    # Matriz de la interfaz simulando la tabla
     tk.Label(ventana, text="Cédula").grid(row=0, column=0, sticky="w", padx=10, pady=5)
     entradaCedula = tk.Entry(ventana, width=25)
     entradaCedula.grid(row=0, column=1, padx=10, pady=5)
@@ -179,7 +240,6 @@ def InsertarDonadorAux():
     entradaCorreo = tk.Entry(ventana, width=35)
     entradaCorreo.grid(row=7, column=1, columnspan=2, sticky="w", padx=10, pady=5)
 
-    # Contenedor de botones inferiores
     marcoBotones = tk.Frame(ventana)
     marcoBotones.grid(row=8, column=0, columnspan=3, pady=15)
 
@@ -189,5 +249,6 @@ def InsertarDonadorAux():
 
     ventana.mainloop()
 
-
-InsertarDonadorAux()
+donadores= CargarDatosDesdeArchivo()
+InsertarDonadorAux(donadores)
+print(donadores)
