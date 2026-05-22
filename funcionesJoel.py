@@ -7,7 +7,6 @@ import re
 from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox, ttk
-import re
 import pickle
 archivoDonadores = "donadores.dat"
 
