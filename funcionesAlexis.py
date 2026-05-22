@@ -1,46 +1,51 @@
 #importacion de librerias
 import random
 from datetime import *
+import pickle
 
 #Tupla global de tipos de sangre
 tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
 #definicion de funciones
+
+def sacarTipoSangre(ptipo, ptupla):
+    return ptupla[ptipo-1]
+
 def generarNombre():
-    nombres=open("nombres.txt", encoding="utf8")
-    apellidos=open("apellidos.txt", encoding="utf8")
-    apellidoRan=random.randint(0,234)
-    apellido2Ran=random.randint(0,112)
-    nombreRan=random.randint(0,112)
-    nombre=[nombres.readline(nombreRan).strip(), apellidos.readline(apellidoRan).strip(), apellidos.readline(apellido2Ran).strip()]
-    nombres.close()
-    apellidos.close()
+    with open('nombres.txt', 'r', encoding="utf-8") as archivoN:
+        nombres = archivoN.readlines()
+    with open('apellidos.txt', 'r', encoding="utf-8") as archivoA:
+        apellidos = archivoA.readlines()
+    nombre=[random.choice(nombres).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
+    archivoN.close()
+    archivoA.close()
     return nombre
+
 
 def generarCedula():
     prob=random.randint(1,100)
     if prob>=0 and prob<=40:
-        cedula="1 "
+        cedula="1-"
     elif prob>40 and prob<=60:
-        cedula="2 "
+        cedula="2-"
     elif prob>60 and prob<=72:
-        cedula="3 "
+        cedula="3-"
     elif prob>72 and prob<=79:
-        cedula="4 "
+        cedula="4-"
     elif prob>79 and prob<=85:
-        cedula="5 "
+        cedula="5-"
     elif prob>85 and prob<=92:
-        cedula="6 "
+        cedula="6-"
     elif prob>92 and prob<=97:
-        cedula="7 "
+        cedula="7-"
     elif prob==98:
-        cedula="8 "
+        cedula="8-"
     else:
-        cedula="9"
+        cedula="9-"
     for i in range(8):
         cedula+=str(random.randint(0,9))
         if i==3:
-            cedula+=" "
+            cedula+="-"
     return cedula
 
 def generarTipoSangre():
