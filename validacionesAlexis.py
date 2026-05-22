@@ -162,3 +162,4 @@ def actualizarDonanteAux(pbaseDatos):
 generarDonantesAux(baseDatos)
 print(baseDatos)
 baseDatos=actualizarDonanteAux(baseDatos)
+print(baseDatos)

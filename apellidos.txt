@@ -30,11 +30,15 @@ Cruz
 Delgado
 Díaz
 Durán
+Einstein
 Escalante
 Espinoza
 Estrada
+Euler
 Fallas
+Featheringham
 Fernández
+Fibonacci
 Flores
 Fonseca
 Fuentes
@@ -67,6 +71,7 @@ Morales
 Moreno
 Murillo
 Navarro
+Noether
 Núñez
 Ocampo
 Orellana
@@ -93,6 +98,7 @@ Salazar
 Sánchez
 Sandoval
 Segura
+Schrödinger
 Solano
 Soto
 Suárez
@@ -100,6 +106,7 @@ Torres
 Trejos
 Ureña
 Valdez
+van der Sar
 Valverde
 Vargas
 Vásquez
@@ -110,4 +117,5 @@ Vargas
 Vega
 Vílchez
 Zamora
+Zelensky
 Zúñiga

@@ -11,20 +11,28 @@ tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 def sacarTipoSangre(ptipo, ptupla):
     return ptupla[ptipo-1]
 
-def generarNombre():
+def generarNombreSexo():
     with open('nombres.txt', 'r', encoding="utf-8") as archivoN:
         nombres = archivoN.readlines()
+    with open('nombresf.txt', 'r', encoding="utf-8") as archivoN2:
+        nombresf = archivoN2.readlines()
     with open('apellidos.txt', 'r', encoding="utf-8") as archivoA:
         apellidos = archivoA.readlines()
-    nombre=[random.choice(nombres).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
     archivoN.close()
+    archivoN2.close()
     archivoA.close()
-    return nombre
+    sexo=generarSexo()
+    if sexo:
+        nombre=[random.choice(nombres).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
+    else:
+        nombre=[random.choice(nombresf).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
+    
+    return nombre, sexo
 
 
 def generarCedula():
     prob=random.randint(1,100)
-    if prob>=0 and prob<=40:
+    if prob>=1 and prob<=40:
         cedula="1-"
     elif prob>40 and prob<=60:
         cedula="2-"
@@ -139,10 +147,9 @@ def generarJustificacion():
 def generarDonantes(pdonantes):
     donantes=[]
     for i in range(pdonantes):
-        nombre=generarNombre()
+        nombre, sexo = generarNombreSexo()
         cedula=generarCedula()
         tipoSangre=generarTipoSangre()
-        sexo=generarSexo()
         fechaN=generarFechaN()
         peso=generarPeso()
         correo=generarCorreo(nombre)
