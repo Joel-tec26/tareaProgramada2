@@ -10,6 +10,16 @@ from tkinter import messagebox, ttk
 import pickle
 archivoDonadores = "donadores.dat"
 
+# variables globales
+provinciasDiccionario = {
+    "1": ["San José", ["El Banco Nacional de sangre", "Hospital México", "Hospital San Juan de Dios"]],
+    "2": ["Alajuela", ["Hospital San Rafael de Alajuela", "Hospital de San Ramón", "Hospital del Cantón Norteño"]],
+    "3": ["Cartago", ["Hospital Max Peralta"]],
+    "4": ["Heredia", ["Hospital San Vicente de Paúl"]],
+    "5": ["Guanacaste", ["Hospital La Anexión en Nicoya", "Hospital Enrique Baltodano de Liberia"]],
+    "6": ["Puntarenas", ["Hospital Monseñor Sanabria"]],
+    "7": ["Limón", ["Hospital Tony Facio", "Hospital de Guápiles"]],
+    "8": ["Naturalizado", ["Sede Central de Donación"]]}
 
 # ingresar donadores
 
@@ -55,23 +65,13 @@ def obtenerMensajeEdad(fechaNacimientoStr):
         return "Dado su fecha de nacimiento usted ya puede ser donador."
     return "Dado su fecha de nacimiento usted aún no puede ser donador."
 
-def obtenerLugarDonacion(cedula):
-    provinciasDiccionario = {
-        "1": ["San José", ["El Banco Nacional de sangre", "Hospital México", "Hospital San Juan de Dios"]],
-        "2": ["Alajuela", ["Hospital San Rafael de Alajuela", "Hospital de San Ramón", "Hospital del Cantón Norteño"]],
-        "3": ["Cartago", ["Hospital Max Peralta"]],
-        "4": ["Heredia", ["Hospital San Vicente de Paúl"]],
-        "5": ["Guanacaste", ["Hospital La Anexión en Nicoya", "Hospital Enrique Baltodano de Liberia"]],
-        "6": ["Puntarenas", ["Hospital Monseñor Sanabria"]],
-        "7": ["Limón", ["Hospital Tony Facio", "Hospital de Guápiles"]],
-        "8": ["Naturalizado", ["Sede Central de Donación"]]
-    }
+def obtenerLugarDonacion(cedula, pprovincias):
     primerDigito = cedula[0]
     if primerDigito == "8":
         return "Casos especiales de las cédulas que donen en San José. Centro asignado Sede Central de Donación."
-    if primerDigito in provinciasDiccionario:
-        provincia = provinciasDiccionario[primerDigito][0]
-        hospitales = " o ".join(provinciasDiccionario[primerDigito][1])
+    if primerDigito in pprovincias:
+        provincia = pprovincias[primerDigito][0]
+        hospitales = " o ".join(pprovincias[primerDigito][1])
         return f"Dado que usted nació en la provincia de {provincia}, usted podría donar en {hospitales}."
     return "Provincia no encontrada."
 
@@ -137,7 +137,7 @@ def validarPeso(pesoStr):
     
 # auxiliar
 
-def insertarDonadorAux(matrizDonadores):
+def insertarDonadorAux(matrizDonadores, pprovincias):
     def registrar():
         cedula = entradaCedula.get().strip()
         nombre = entradaNombre.get().strip()
@@ -172,13 +172,13 @@ def insertarDonadorAux(matrizDonadores):
         if existe:
             messagebox.showwarning("Aviso", f"La cédula {cedula} ya se encuentra registrada en el sistema.")
             return
-        nuevoRegistro = [cedula, nombre, fechaNac, tipoSangre, sexo, int(peso), telefono, correo]
+        nuevoRegistro = [cedula, nombre, fechaNac, tipoSangre, sexo, int(peso), telefono, correo, True]
         matrizDonadores.insert(posicion, nuevoRegistro)
         # Guardar el objeto completo usando pickle
         guardarMatrizEnArchivo(matrizDonadores)
         #  textos para el mensaje
         msgEdad = obtenerMensajeEdad(fechaNac)
-        msgLugar = obtenerLugarDonacion(cedula)
+        msgLugar = obtenerLugarDonacion(cedula, pprovincias)
         msgPeso = obtenerMensajePeso(peso)
         msgSangre = obtenerInformacionResaltadaSangre(tipoSangre)
 
@@ -257,8 +257,6 @@ def insertarDonadorAux(matrizDonadores):
 
 def eliminarDonadorAux(matrizDonadores):
     """
-    Solicita la cédula. Si existe, pide seleccionar la justificación 
-    médica/legal y cambia el estado del donador a Inactivo de forma persistente.
     """
     def ProcesarInactivacion():
         cedula = entradaCedula.get().strip()
@@ -279,7 +277,7 @@ def eliminarDonadorAux(matrizDonadores):
             return
 
         # Validación lógica por si ya fue inactivado previamente
-        if matrizDonadores[posicion][8] == "Inactivo":
+        if matrizDonadores[posicion][8] == False:
             messagebox.showinfo("Información", "Esta persona ya se encuentra registrada como un donador Inactivo.")
             return
 
@@ -289,10 +287,13 @@ def eliminarDonadorAux(matrizDonadores):
         if confirmacion:
             # Cambio de estado lógico 
             if len(matrizDonadores[posicion]) == 8:
-                matrizDonadores[posicion].append("Inactivo") # Índice 8
-                matrizDonadores[posicion].append(justificacionSeleccionada) # Índice 9
+                matrizDonadores[posicion].append(False) 
+                matrizDonadores[posicion].append(justificacionSeleccionada) 
+            elif len(matrizDonadores[posicion]) == 9:
+                matrizDonadores[posicion][8] = False # Modifica el estado existente
+                matrizDonadores[posicion].append(justificacionSeleccionada) 
             else:
-                matrizDonadores[posicion][8] = "Inactivo"
+                matrizDonadores[posicion][8] = False
                 matrizDonadores[posicion][9] = justificacionSeleccionada
             guardarMatrizEnArchivo(matrizDonadores)
             messagebox.showinfo("Información", "Donador eliminado satisfactoriamente.")
@@ -347,7 +348,7 @@ donadores= cargarDatosDesdeArchivo()
 while True:
     opcion=input("ingrese una opcion: ")
     if opcion == "1":
-        insertarDonadorAux(donadores)
+        insertarDonadorAux(donadores, provinciasDiccionario)
         print(donadores)
     elif opcion == "2":
         eliminarDonadorAux(donadores)
