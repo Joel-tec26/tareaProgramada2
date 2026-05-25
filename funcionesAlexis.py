@@ -2,6 +2,7 @@
 import random
 from datetime import *
 import faker
+from ddlc import *
 fk=faker.Faker("es_ES")
 
 #Tupla global de tipos de sangre
@@ -31,8 +32,14 @@ def generarNombreGenero():
     nombre.append(fk.last_name())
     return nombre, genero
 
+def validarDonante(pmatriz,pcedula):
+    for i in range(len(pmatriz)):
+        if pmatriz[i][1]==pcedula:
+            return True, i
+    return False, i
 
-def generarCedula():
+
+def generarCedula(pdonantes):
     prob=random.randint(1,100)
     if prob>=1 and prob<=40:
         cedula="1-"
@@ -56,6 +63,10 @@ def generarCedula():
         cedula+=str(random.randint(0,9))
         if i==3:
             cedula+="-"
+    if pdonantes==[]:
+        return cedula
+    if validarDonante(pdonantes, cedula)[0]:
+        generarCedula(pdonantes)
     return cedula
 
 def generarTipoSangre():
@@ -146,11 +157,11 @@ def generarEstado():
 def generarJustificacion():
     return random.randint(1,7)
 
-def generarDonantes(pdonantes):
+def generarDonantes(pdonantes,pbaseDatos):
     donantes=[]
     for i in range(pdonantes):
         nombre, sexo = generarNombreGenero()
-        cedula=generarCedula()
+        cedula=generarCedula(pbaseDatos)
         tipoSangre=generarTipoSangre()
         fechaN=generarFechaN()
         peso=generarPeso()
@@ -161,5 +172,5 @@ def generarDonantes(pdonantes):
             justific=0
         else:
             justific=generarJustificacion()
-        donantes.append([nombre,cedula,tipoSangre,sexo,fechaN,peso,correo,telefono,estado,justific])
+        donantes.append([tuple(nombre),cedula,tipoSangre,sexo,fechaN,peso,correo,telefono,estado,justific])
     return donantes

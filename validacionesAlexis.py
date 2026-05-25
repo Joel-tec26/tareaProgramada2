@@ -20,7 +20,19 @@ def actualizarMatrizEnArchivo(matrizGuardar):
         pickle.dump(matrizGuardar, archivo)
     return
 
-
+def normalizarNombre(nombreSucio):
+    """
+    Funcionalidad:
+    Limpia y normaliza un nombre eliminando espacios extra y aplicando 
+    formato de título.
+    Entradas:
+    -nombreSucio(str): nombre con posibles espacios innecesarios 
+    o formato incorrecto
+    Salidas:
+    -nombre(tupla): nombre limpio con la primera letra de cada palabra
+    en mayúscula
+    """
+    return tuple(" ".join(nombreSucio.strip().split()).title().split())
 
 def generarDonantesAux(pbaseDatos):
     def generar():
@@ -28,7 +40,7 @@ def generarDonantesAux(pbaseDatos):
         if not validarCantidad(cantidad):
             messagebox.showwarning("Aviso","debe escribir un valor numerico")
             return pbaseDatos
-        for i in generarDonantes(int(cantidad)):
+        for i in generarDonantes(int(cantidad),pbaseDatos):
             pbaseDatos.append(i)
         guardarMatrizEnArchivo(pbaseDatos)
         regresar()
@@ -42,7 +54,7 @@ def generarDonantesAux(pbaseDatos):
     ventana = tk.Tk()
     ventana.title("Insertar donador")
     ventana.geometry("550x360")
-    tk.Label(ventana, text="Actualizar Donante", font=("Arial", 20)).grid(row=0, column=1, sticky="w", padx=10, pady=5)
+    tk.Label(ventana, text="Generar Donante/s", font=("Arial", 20)).grid(row=0, column=1, sticky="w", padx=10, pady=5)
     tk.Label(ventana, text="Cantidad de Donantes").grid(row=1, column=0, sticky="w", padx=10, pady=5)
     entradaCantidad = tk.Entry(ventana, width=25)
     entradaCantidad.grid(row=1, column=1, padx=10, pady=5)
@@ -56,6 +68,9 @@ def generarDonantesAux(pbaseDatos):
 
 def actualizarDonanteAux(pbaseDatos):
     def actualizar():
+        if pbaseDatos==[]:
+            messagebox.showwarning("Aviso", "no hay ningun paciente registrado")
+            return
         cedula = entradaCedula.get().strip()
         nombre = entradaNombre.get().strip()
         fechaNac = entradaFecha.get().strip()
@@ -84,19 +99,20 @@ def actualizarDonanteAux(pbaseDatos):
             messagebox.showwarning("Aviso", "Correo no permitido.\nSolo se aceptan dominios: @costarricense.cr, @racsa.go.cr, @ccss.sa.cr o @gmail.com")
             return
         # Búsqueda Binaria para ver si existe para poder actualizar
-        existe, posicion = buscarDonador(cedula, pbaseDatos)
+        existe, posicion = validarDonante(pcedula=cedula, pmatriz=pbaseDatos)
         if not existe:
             messagebox.showwarning("Aviso", f"La cédula {cedula} no se encuentra registrada en el sistema.")
             return
         confirmacion = messagebox.askyesno("Confirmar acción", f"¿Está seguro de que desea inactivar al donador con cédula {cedula}?")
         if confirmacion:
-            nuevoRegistro = [cedula, nombre, fechaNac, tipoSangre, sexo, int(peso), telefono, correo]
+            nuevoRegistro = [normalizarNombre(nombre), cedula, fechaNac, tipoSangre, sexo, int(peso), telefono, correo]
             pbaseDatos[posicion]=nuevoRegistro
             actualizarMatrizEnArchivo(pbaseDatos)
             messagebox.showinfo("Información", "Donador actualizado satisfactoriamente.")
             regresar()
         else:
             messagebox.showinfo("Información", "Donador NO actualizado.")    
+
     def limpiar():
         entradaCedula.delete(0, tk.END)
         entradaNombre.delete(0, tk.END)
@@ -158,8 +174,8 @@ def actualizarDonanteAux(pbaseDatos):
     return pbaseDatos
 
 
-
 generarDonantesAux(baseDatos)
 print(baseDatos)
 baseDatos=actualizarDonanteAux(baseDatos)
 print(baseDatos)
+input
