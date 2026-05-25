@@ -1,7 +1,8 @@
 #importacion de librerias
 import random
 from datetime import *
-import pickle
+import faker
+fk=faker.Faker("es_ES")
 
 #Tupla global de tipos de sangre
 tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
@@ -11,23 +12,24 @@ tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 def sacarTipoSangre(ptipo, ptupla):
     return ptupla[ptipo-1]
 
-def generarNombreSexo():
-    with open('nombres.txt', 'r', encoding="utf-8") as archivoN:
-        nombres = archivoN.readlines()
-    with open('nombresf.txt', 'r', encoding="utf-8") as archivoN2:
-        nombresf = archivoN2.readlines()
-    with open('apellidos.txt', 'r', encoding="utf-8") as archivoA:
-        apellidos = archivoA.readlines()
-    archivoN.close()
-    archivoN2.close()
-    archivoA.close()
-    sexo=generarSexo()
-    if sexo:
-        nombre=[random.choice(nombres).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
-    else:
-        nombre=[random.choice(nombresf).strip(),random.choice(apellidos).strip(),random.choice(apellidos).strip()]
-    
-    return nombre, sexo
+def generarNombreGenero():
+    """
+    funcion: genera un nombre totalmente aleatorio y su genero
+    entradas: no hay
+    salidas: 
+    -tuple((fk.name_male()).split()) (tupla): nombre generado guardado en tupla
+    -genero(booleano): el genero del nombre
+    """
+    genero=random.choice([True, False])
+    if genero:
+        nombre=fk.first_name_male().split()
+        nombre.append(fk.last_name())
+        nombre.append(fk.last_name())
+        return nombre, genero
+    nombre=fk.first_name_female().split()
+    nombre.append(fk.last_name())
+    nombre.append(fk.last_name())
+    return nombre, genero
 
 
 def generarCedula():
@@ -147,7 +149,7 @@ def generarJustificacion():
 def generarDonantes(pdonantes):
     donantes=[]
     for i in range(pdonantes):
-        nombre, sexo = generarNombreSexo()
+        nombre, sexo = generarNombreGenero()
         cedula=generarCedula()
         tipoSangre=generarTipoSangre()
         fechaN=generarFechaN()
