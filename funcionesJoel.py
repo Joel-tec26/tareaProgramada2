@@ -8,7 +8,11 @@ from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox, ttk
 import pickle
+
+
 archivoDonadores = "donadores.dat"
+
+tipoSangre = ("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
 # variables globales
 provinciasDiccionario = {
@@ -21,9 +25,7 @@ provinciasDiccionario = {
     "7": ["Limón", ["Hospital Tony Facio", "Hospital de Guápiles"]],
     "8": ["Naturalizado", ["Sede Central de Donación"]]}
 
-# ingresar donadores
-
-# prosesamiento 
+# Procesar
 def cargarDatosDesdeArchivo():
     try:
         with open(archivoDonadores, "rb") as archivo:
@@ -39,16 +41,17 @@ def guardarMatrizEnArchivo(matrizGuardar):
     return
 
 def buscarDonador(cedulaTarget, matrizA_Buscar):
+    cedulaInt = int(cedulaTarget.replace("-", ""))
     izquierda = 0
     derecha = len(matrizA_Buscar) - 1
     
     while izquierda <= derecha:
         medio = (izquierda + derecha) // 2
-        cedulaMedio = matrizA_Buscar[medio][0]
+        cedulaMedio = matrizA_Buscar[medio][1] 
         
-        if cedulaMedio == cedulaTarget:
+        if cedulaMedio == cedulaInt:
             return True, medio
-        elif cedulaMedio < cedulaTarget:
+        elif cedulaMedio < cedulaInt:
             izquierda = medio + 1
         else:
             derecha = medio - 1
@@ -76,21 +79,15 @@ def obtenerLugarDonacion(cedula, pprovincias):
     return "Provincia no encontrada."
 
 def obtenerMensajePeso(pesoStr):
-    peso = int(pesoStr)
+    peso = float(pesoStr)
     if peso <= 50:
         return "Usted debe pesar más de 50 kgms para poder ser donador."
     if 50 < peso <= 110:
         return "Usted posee un peso adecuado, correcto para ser donador de sangre."
     return "Dado su sobre peso, no es posible donar sangre."
 
-def obtenerRecomendacionSangre(tipoSangre):
-    mensaje = f"Conoce tu tipo de sangre {tipoSangre}"
-    if tipoSangre in ["A+", "A-"]:
-        mensaje += "\nPor el tipo de sangre le recomendamos ver el video de: Particularidades de la sangre tipo A Responde diferente al estrés según la ciencia."
-    return mensaje
-
-def obtenerInformacionResaltadaSangre(tipoSangre):
-    tipoSangre = tipoSangre.upper()
+def obtenerInformacionResaltadaSangre(tipoSangreStr):
+    tipoSangreStr = tipoSangreStr.upper()
     recomendaciones = {
         "A+": "se les recomienda que donen sangre entera y plaquetas.",
         "A-": "se les recomienda que donen sangre entera y glóbulos rojos dobles.",
@@ -100,14 +97,14 @@ def obtenerInformacionResaltadaSangre(tipoSangre):
         "O-": "se les recomienda donar glóbulos rojos dobles y sangre entera.",
         "AB+": "se les recomienda hacer donaciones de plaquetas y de plasma.",
         "AB-": "se les recomienda donar plaquetas y plasma."
-        }
-    baseMensaje = f"Conoce tu tipo de sangre {tipoSangre}: A los donantes con este tipo {recomendaciones.get(tipoSangre, '')}"
-    if tipoSangre in ["A+", "A-"]:
+    }
+    baseMensaje = f"Conoce tu tipo de sangre {tipoSangreStr}: A los donantes con este tipo {recomendaciones.get(tipoSangreStr, '')}"
+    if tipoSangreStr in ["A+", "A-"]:
         baseMensaje += "\n\nAdemás, se le sugiere ver el video de Particularidades de la sangre tipo A: Responde diferente al estrés según la ciencia."
         
     return baseMensaje
     
-# validaciones
+# Validaciones
 
 def validarCedula(cedula):
     patron = r"^[1-9]-\d{3,5}-\d{3,4}$"
@@ -130,229 +127,230 @@ def validarTelefono(telefono):
 
 def validarPeso(pesoStr):
     try:
-        peso = int(pesoStr)
-        return 50 < peso < 120
+        peso = float(pesoStr)
+        return 50.0 < peso < 120.0
     except ValueError:
         return False
-    
-# auxiliar
 
+# aux
 def insertarDonadorAux(matrizDonadores, pprovincias):
     def registrar():
         cedula = entradaCedula.get().strip()
-        nombre = entradaNombre.get().strip()
+        nombreCompletoStr = entradaNombreCompleto.get().strip()
         fechaNac = entradaFecha.get().strip()
-        tipoSangre = comboSangre.get()
-        sexo = "Masculino" if varSexo.get() == 1 else "Femenino"
-        peso = entradaPeso.get().strip()
+        tipoSangreString = comboSangre.get()
+        sexoBool = True if varSexo.get() == 1 else False
+        pesoStr = entradaPeso.get().strip()
         telefono = entradaTelefono.get().strip()
-        correo = entradaCorreo.get().strip()
-        #  Validaciones
-        if not validarCedula(cedula):
-            messagebox.showwarning("Aviso", "Formato de cédula incorrecto.\nDebe ser #-####-#### (ej. 2-0893-0750) y no puede iniciar con 0.")
-            return
-        if not nombre:
+        correoStr = entradaCorreo.get().strip()
+        if not nombreCompletoStr:
             messagebox.showwarning("Aviso", "El nombre completo es requerido.")
             return
-        if not validarFechaNacimiento(fechaNac):
-            messagebox.showwarning("Aviso", "Fecha de nacimiento inválida.\nDebe usar el formato DD/MM/AAAA (ej. 25/12/2000).")
+        partesNombre = nombreCompletoStr.split()
+        if len(partesNombre) < 3:
+            messagebox.showwarning("Aviso", "Por favor ingrese Nombre, Primer Apellido y Segundo Apellido separados por espacios.")
             return
-        if not validarPeso(peso):
-            messagebox.showwarning("Aviso", "El peso debe ser un número entero mayor a 50 y menor a 120.")
+        if not validarCedula(cedula):
+            messagebox.showwarning("Aviso", "Formato de cédula incorrecto.\nDebe ser #-####-####.")
+            return
+        if not validarFechaNacimiento(fechaNac):
+            messagebox.showwarning("Aviso", "Fecha de nacimiento inválida (DD/MM/AAAA).")
+            return
+        if not validarPeso(pesoStr):
+            messagebox.showwarning("Aviso", "El peso debe ser un número mayor a 50 y menor a 120.")
             return
         if not validarTelefono(telefono):
-            messagebox.showwarning("Aviso", "Formato de teléfono incorrecto.\nDebe ser de 8 dígitos (ej. 61375404) y no puede iniciar con 0, 1, 3 o 5.")
+            messagebox.showwarning("Aviso", "Formato de teléfono incorrecto.")
             return
-        if not validarCorreo(correo):
-            messagebox.showwarning("Aviso", "Correo no permitido.\nSolo se aceptan dominios: @costarricense.cr, @racsa.go.cr, @ccss.sa.cr o @gmail.com")
+        if not validarCorreo(correoStr):
+            messagebox.showwarning("Aviso", "Correo no permitido.")
             return
-
-        # Búsqueda Binaria para evitar duplicaciones
         existe, posicion = buscarDonador(cedula, matrizDonadores)
         if existe:
-            messagebox.showwarning("Aviso", f"La cédula {cedula} ya se encuentra registrada en el sistema.")
+            messagebox.showwarning("Aviso", f"La cédula {cedula} ya se encuentra registrada.")
             return
-        nuevoRegistro = [cedula, nombre, fechaNac, tipoSangre, sexo, int(peso), telefono, correo, True]
+        apellido2 = partesNombre[-1]
+        apellido1 = partesNombre[-2]
+        nombre = " ".join(partesNombre[:-2])
+        listaNombreEstructurada = [nombre, apellido1, apellido2]
+        cedulaInt = int(cedula.replace("-", ""))
+        tipoSangreInt = tipoSangre.index(tipoSangreString)
+        dia, mes, anno = map(int, fechaNac.split("/"))
+        tuplaFecha = (dia, mes, anno)
+        pesoFloat = float(pesoStr)
+        estadoInicial = 1
+        nuevoRegistro = [
+            listaNombreEstructurada,     
+            cedulaInt,       
+            tipoSangreInt,   
+            sexoBool,        
+            tuplaFecha,      
+            pesoFloat,       
+            correoStr,          
+            telefono,        
+            estadoInicial    
+        ]
         matrizDonadores.insert(posicion, nuevoRegistro)
-        # Guardar el objeto completo usando pickle
         guardarMatrizEnArchivo(matrizDonadores)
-        #  textos para el mensaje
         msgEdad = obtenerMensajeEdad(fechaNac)
         msgLugar = obtenerLugarDonacion(cedula, pprovincias)
-        msgPeso = obtenerMensajePeso(peso)
-        msgSangre = obtenerInformacionResaltadaSangre(tipoSangre)
-
-        resultadoFluido = (
-            f"{msgEdad}\n\n"
-            f"{msgLugar}\n\n"
-            f"{msgPeso}\n\n"
-            f"{msgSangre}"
-        )
+        msgPeso = obtenerMensajePeso(pesoStr)
+        msgSangre = obtenerInformacionResaltadaSangre(tipoSangreString)
+        resultadoFluido = f"{msgEdad}\n\n{msgLugar}\n\n{msgPeso}\n\n{msgSangre}"
         messagebox.showinfo("Información de la inserción inicial", resultadoFluido)
         limpiar()
 
     def limpiar():
         entradaCedula.delete(0, tk.END)
-        entradaNombre.delete(0, tk.END)
+        entradaNombreCompleto.delete(0, tk.END)
         entradaFecha.delete(0, tk.END)
         comboSangre.set("O+")
         varSexo.set(1)
         entradaPeso.delete(0, tk.END)
         entradaTelefono.delete(0, tk.END)
         entradaCorreo.delete(0, tk.END)
-
-    def regresar():
-        ventana.destroy()
-
-    # Creación de la Interfaz con Tkinter
-    ventana = tk.Tk()
+    ventana = tk.Toplevel()
     ventana.title("Insertar donador")
     ventana.geometry("550x360")
-
     tk.Label(ventana, text="Cédula").grid(row=0, column=0, sticky="w", padx=10, pady=5)
     entradaCedula = tk.Entry(ventana, width=25)
     entradaCedula.grid(row=0, column=1, padx=10, pady=5)
-
     tk.Label(ventana, text="Nombre Completo").grid(row=1, column=0, sticky="w", padx=10, pady=5)
-    entradaNombre = tk.Entry(ventana, width=40)
-    entradaNombre.grid(row=1, column=1, columnspan=2, sticky="w", padx=10, pady=5)
-
+    entradaNombreCompleto = tk.Entry(ventana, width=40)
+    entradaNombreCompleto.grid(row=1, column=1, columnspan=2, sticky="w", padx=10, pady=5)
     tk.Label(ventana, text="Fecha de nacimiento").grid(row=2, column=0, sticky="w", padx=10, pady=5)
     entradaFecha = tk.Entry(ventana, width=25)
     entradaFecha.grid(row=2, column=1, padx=10, pady=5)
-
     tk.Label(ventana, text="Tipo de sangre").grid(row=3, column=0, sticky="w", padx=10, pady=5)
-    opcionesSangre = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]
-    comboSangre = ttk.Combobox(ventana, values=opcionesSangre, state="readonly", width=10)
+    comboSangre = ttk.Combobox(ventana, values=tipoSangre, state="readonly", width=10)
     comboSangre.set("O+")
     comboSangre.grid(row=3, column=1, sticky="w", padx=10, pady=5)
-
     tk.Label(ventana, text="Sexo").grid(row=4, column=0, sticky="w", padx=10, pady=5)
     varSexo = tk.IntVar(value=1)
     tk.Radiobutton(ventana, text="Masculino", variable=varSexo, value=1).grid(row=4, column=1, sticky="w", padx=10)
     tk.Radiobutton(ventana, text="Femenino", variable=varSexo, value=2).grid(row=4, column=1, sticky="w", padx=110)
-
-    tk.Label(ventana, text="Peso").grid(row=5, column=0, sticky="w", padx=10, pady=5)
+    tk.Label(ventana, text="Peso (kg)").grid(row=5, column=0, sticky="w", padx=10, pady=5)
     entradaPeso = tk.Entry(ventana, width=25)
     entradaPeso.grid(row=5, column=1, padx=10, pady=5)
-
     tk.Label(ventana, text="Teléfono").grid(row=6, column=0, sticky="w", padx=10, pady=5)
     entradaTelefono = tk.Entry(ventana, width=25)
     entradaTelefono.grid(row=6, column=1, padx=10, pady=5)
-
     tk.Label(ventana, text="Correo").grid(row=7, column=0, sticky="w", padx=10, pady=5)
     entradaCorreo = tk.Entry(ventana, width=35)
-    entradaCorreo.grid(row=7, column=1, columnspan=2, sticky="w", padx=10, pady=5)
-
+    entradaCorreo.grid(row=7, column=1, sticky="w", padx=10, pady=5)
     marcoBotones = tk.Frame(ventana)
-    marcoBotones.grid(row=8, column=0, columnspan=3, pady=15)
-
+    marcoBotones.grid(row=8, column=0, columnspan=2, pady=15)
     tk.Button(marcoBotones, text="Registrar", command=registrar, width=10).pack(side="left", padx=5)
     tk.Button(marcoBotones, text="Limpiar", command=limpiar, width=10).pack(side="left", padx=5)
-    tk.Button(marcoBotones, text="Regresar", command=regresar, width=10).pack(side="left", padx=5)
-
-    ventana.mainloop()
+    tk.Button(marcoBotones, text="Regresar", command=lambda: ventana.destroy(), width=10).pack(side="left", padx=5)
 
 # eliminar donador
 
 def eliminarDonadorAux(matrizDonadores):
-    """
-    """
     def ProcesarInactivacion():
         cedula = entradaCedula.get().strip()
-        justificacionSeleccionada = comboJustificacion.get()
-
+        justificacionTexto = comboJustificacion.get()
         if not validarCedula(cedula):
-            messagebox.showwarning("Aviso", "Formato de cédula incorrecto.\nDebe ser #-####-####.")
+            messagebox.showwarning("Aviso", "Formato de cédula incorrecto.")
             return
-        if not justificacionSeleccionada:
-            messagebox.showwarning("Aviso", "Debe seleccionar una justificación para la exclusión del donador.")
+        if not justificacionTexto:
+            messagebox.showwarning("Aviso", "Debe seleccionar una justificación.")
             return
-
-        # Búsqueda binaria 
         existe, posicion = buscarDonador(cedula, matrizDonadores)
-
         if not existe:
-            messagebox.showwarning("Aviso", f"La persona con el número de cédula: {cedula} no está registrado en la base de datos del Banco de Sangre aún.")
+            messagebox.showwarning("Aviso", f"La cédula {cedula} no está registrada.")
             return
-
-        # Validación lógica por si ya fue inactivado previamente
-        if matrizDonadores[posicion][8] == False:
-            messagebox.showinfo("Información", "Esta persona ya se encuentra registrada como un donador Inactivo.")
+        if matrizDonadores[posicion][8] == 0:
+            messagebox.showinfo("Información", "Esta persona ya se encuentra registrada como Inactiva.")
             return
-
-        # Ventana de confirmación
-        confirmacion = messagebox.askyesno("Confirmar acción", f"¿Está seguro de que desea inactivar al donador con cédula {cedula}?")
-        
+        confirmacion = messagebox.askyesno("Confirmar acción", "¿Está seguro de que desea inactivar al donador?")
         if confirmacion:
-            # Cambio de estado lógico 
-            if len(matrizDonadores[posicion]) == 8:
-                matrizDonadores[posicion].append(False) 
-                matrizDonadores[posicion].append(justificacionSeleccionada) 
-            elif len(matrizDonadores[posicion]) == 9:
-                matrizDonadores[posicion][8] = False # Modifica el estado existente
-                matrizDonadores[posicion].append(justificacionSeleccionada) 
+            justificacionInt = causasRechazo.index(justificacionTexto) + 1
+            matrizDonadores[posicion][8] = 0
+            if len(matrizDonadores[posicion]) == 9:
+                matrizDonadores[posicion].append(justificacionInt)
             else:
-                matrizDonadores[posicion][8] = False
-                matrizDonadores[posicion][9] = justificacionSeleccionada
+                matrizDonadores[posicion][9] = justificacionInt
             guardarMatrizEnArchivo(matrizDonadores)
-            messagebox.showinfo("Información", "Donador eliminado satisfactoriamente.")
-            regresar()
+            messagebox.showinfo("Información", "Donador inactivado satisfactoriamente.")
+            ventana.destroy()
         else:
-            messagebox.showinfo("Información", "Donador NO eliminado.")
-
-    def limpiar():
-        entradaCedula.delete(0, tk.END)
-        comboJustificacion.set("")
-
-    def regresar():
-        ventana.destroy()
-
-    ventana = tk.Tk()
+            messagebox.showinfo("Información", "Donador NO inactivado.")
+    ventana = tk.Toplevel()
     ventana.title("Eliminar donador")
     ventana.geometry("520x200")
-
     tk.Label(ventana, text="Cédula a buscar:").grid(row=0, column=0, sticky="w", padx=15, pady=15)
     entradaCedula = tk.Entry(ventana, width=20)
     entradaCedula.grid(row=0, column=1, sticky="w", padx=15, pady=15)
-
     tk.Label(ventana, text="Justificación del rechazo:").grid(row=1, column=0, sticky="w", padx=15, pady=10)
-    
-    # Lista de causas de rechazo según normativas
     causasRechazo = [
-        "Enfermedades Infecciosas/Crónicas",
-        "Conductas de Riesgo",
-        "Factores de Salud Física",
-        "Procedimientos Médicos",
-        "Uso de Medicamentos",
-        "Estilo de Vida y Viajes",
-        "Situaciones Específicas"
+        "Enfermedades Infecciosas/Crónicas", 
+        "Conductas de Riesgo",               
+        "Factores de Salud Física",          
+        "Procedimientos Médicos",            
+        "Uso de Medicamentos",               
+        "Estilo de Vida y Viajes",           
+        "Situaciones Específicas"            
     ]
     comboJustificacion = ttk.Combobox(ventana, values=causasRechazo, state="readonly", width=35)
     comboJustificacion.grid(row=1, column=1, sticky="w", padx=15, pady=10)
-
-    # Contenedor de control inferior
     marcoBotones = tk.Frame(ventana)
     marcoBotones.grid(row=2, column=0, columnspan=2, pady=15)
-
     tk.Button(marcoBotones, text="Inactivar", command=ProcesarInactivacion, width=10).pack(side="left", padx=5)
-    tk.Button(marcoBotones, text="Limpiar", command=limpiar, width=10).pack(side="left", padx=5)
-    tk.Button(marcoBotones, text="Regresar", command=regresar, width=10).pack(side="left", padx=5)
-
-    ventana.mainloop()
+    tk.Button(marcoBotones, text="Limpiar", command=lambda: [entradaCedula.delete(0, tk.END), comboJustificacion.set("")], width=10).pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", command=lambda: ventana.destroy(), width=10).pack(side="left", padx=5)
 
 
-donadores= cargarDatosDesdeArchivo()
+# ingresar lugar de donacion
+
+def insertarLugarDonacionAux():
+    ventanaLugares = tk.Toplevel()
+    ventanaLugares.title("Insertar lugar de donación")
+    ventanaLugares.geometry("350x250")
+    tk.Label(ventanaLugares, text="Seleccione la Provincia:").pack(pady=(10, 0))
+    opcionesProvincias = [f"{clave} - {datos[0]}" for clave, datos in provinciasDiccionario.items()]
+    comboProvincia = ttk.Combobox(ventanaLugares, values=opcionesProvincias, state="readonly", width=30)
+    comboProvincia.pack(pady=5)
+    tk.Label(ventanaLugares, text="Nuevo lugar de donación:").pack(pady=(10, 0))
+    entradaLugar = tk.Entry(ventanaLugares, width=35)
+    entradaLugar.pack(pady=5)
+    
+    def insertarLugar():
+        seleccion = comboProvincia.get()
+        nuevoLugar = entradaLugar.get().strip()
+        if not seleccion:
+            messagebox.showwarning("Aviso", "Debe seleccionar una provincia.")
+            return
+        if not nuevoLugar:
+            messagebox.showwarning("Aviso", "Debe ingresar el nombre del nuevo lugar.")
+            return
+        claveProvincia = seleccion.split(" - ")[0]
+        lugaresActuales = provinciasDiccionario[claveProvincia][1]
+        lugaresMinuscula = [lugar.lower() for lugar in lugaresActuales]
+        if nuevoLugar.lower() in lugaresMinuscula:
+            messagebox.showerror("Error", "Este lugar ya está registrado en la provincia seleccionada.")
+        else:
+            provinciasDiccionario[claveProvincia][1].append(nuevoLugar)
+            messagebox.showinfo("Éxito", f"Lugar '{nuevoLugar}' agregado correctamente.")
+            entradaLugar.delete(0, tk.END)
+    marcoBotones = tk.Frame(ventanaLugares)
+    marcoBotones.pack(pady=20)
+    tk.Button(marcoBotones, text="Insertar", command=insertarLugar, width=10).pack(side=tk.LEFT, padx=10)
+    tk.Button(marcoBotones, text="Salir", command=lambda: ventanaLugares.destroy(), width=10).pack(side=tk.RIGHT, padx=10)
 
 
-while True:
-    opcion=input("ingrese una opcion: ")
-    if opcion == "1":
-        insertarDonadorAux(donadores, provinciasDiccionario)
-        print(donadores)
-    elif opcion == "2":
-        eliminarDonadorAux(donadores)
-    elif opcion=="3":
-        break
-    else:
-        print("opcion invalida")
+donadores = cargarDatosDesdeArchivo()
+
+def menuPrincipal():
+    root = tk.Tk()
+    root.title("Sistema Banco de Sangre")
+    root.geometry("400x300")
+    root.resizable(False, False)
+    tk.Label(root, text="Sistema Banco de Sangre", font=("Arial", 14, "bold")).pack(pady=20)
+    tk.Button(root, text="Insertar Donador", width=25, command=lambda: insertarDonadorAux(donadores, provinciasDiccionario)).pack(pady=5)
+    tk.Button(root, text="Eliminar Donador", width=25, command=lambda: eliminarDonadorAux(donadores)).pack(pady=5)
+    tk.Button(root, text="Insertar Lugar de Donación", width=25, command=insertarLugarDonacionAux).pack(pady=5)
+    tk.Button(root, text="Salir", width=25, command=root.destroy).pack(pady=20)
+    root.mainloop()
+
+menuPrincipal()
