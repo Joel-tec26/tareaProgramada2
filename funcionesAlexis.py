@@ -11,6 +11,14 @@ tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 #definicion de funciones
 
 def sacarTipoSangre(ptipo, ptupla):
+    """
+    funcion: saca el tipo de sangre de la tupla
+    entradas:
+    -ptipo: tipo de sangre
+    -ptupla: tupla con tipos de  sangre
+    salidas:
+    ptupla[ptipo-1]: tipo de sangre
+    """
     return ptupla[ptipo-1]
 
 def generarNombreGenero():
@@ -33,13 +41,25 @@ def generarNombreGenero():
     return nombre, genero
 
 def validarDonante(pmatriz,pcedula):
+    """
+    funcion: valdiar que el paciente no esté repetido
+    entrada:
+    -pmatriz: matriz con pacientes
+    -pcedula: cedula del paciente
+    """
     for i in range(len(pmatriz)):
+
         if pmatriz[i][1]==pcedula:
             return True, i
     return False, i
 
 
 def generarCedula(pdonantes):
+    """
+    funcion: genera una cedula aleatoria con estadistica de nacimientos
+    entrada: pdonantes: matriz de donantes
+    salidas: cedula(string): cedula armada
+    """
     prob=random.randint(1,100)
     if prob>=1 and prob<=40:
         cedula="1-"
@@ -70,6 +90,11 @@ def generarCedula(pdonantes):
     return cedula
 
 def generarTipoSangre():
+    """
+    funcion: genera un tipo aleatoria con estadistica
+    entrada: no hay
+    salidas: int: tipo de sangre
+    """
     prob=random.randint(1,100)
     if prob>=0 and prob<=37: #O+
         return 0
@@ -89,9 +114,16 @@ def generarTipoSangre():
         return 7
     
 def generarSexo():
+    """
+    funcion: genera el genero aleatoriamente
+    entrada: no hay
+    salida: bool(random.randint(0,1)): genero aleatorio
+    """
     return bool(random.randint(0,1))
 
 def generarFechaN():
+    """
+    """
     annoActual=int(datetime.now().strftime("%Y"))
     anno=random.randint(annoActual-65, annoActual-18)
     mes=random.randint(1,12)
