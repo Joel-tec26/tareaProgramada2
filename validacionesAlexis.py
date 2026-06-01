@@ -5,6 +5,7 @@ from tkinter import messagebox, ttk
 from ddlc import *
 archivoDonadores = "donadores.dat"
 baseDatos=cargarDatosDesdeArchivo()
+tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
 print(baseDatos)
 
@@ -38,7 +39,7 @@ def generarDonantesAux(pbaseDatos):
     def generar():
         cantidad = entradaCantidad.get().strip()
         if not validarCantidad(cantidad):
-            messagebox.showwarning("Aviso","debe escribir un valor numerico")
+            messagebox.showwarning("Aviso","debe escribir un valor numerico mayor a 0")
             return pbaseDatos
         for i in generarDonantes(int(cantidad),pbaseDatos):
             pbaseDatos.append(i)
@@ -74,8 +75,8 @@ def actualizarDonanteAux(pbaseDatos):
         cedula = entradaCedula.get().strip()
         nombre = entradaNombre.get().strip()
         fechaNac = entradaFecha.get().strip()
-        tipoSangre = comboSangre.get()
-        sexo = "Masculino" if varSexo.get() == 1 else "Femenino"
+        tipoSangre = sacarTipoSangre("NTP", comboSangre.get(), ("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"))
+        sexo = varSexo.get()
         peso = entradaPeso.get().strip()
         telefono = entradaTelefono.get().strip()
         correo = entradaCorreo.get().strip()

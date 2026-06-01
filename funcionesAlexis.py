@@ -9,17 +9,24 @@ fk=faker.Faker("es_ES")
 tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
 #definicion de funciones
-
-def sacarTipoSangre(ptipo, ptupla):
+def sacarTipoSangre(metodo, ptipo, ptupla):
     """
-    funcion: saca el tipo de sangre de la tupla
+    funcion: saca el tipo de sangre de la tupla o saca el numero del tipo de sangre
     entradas:
     -ptipo: tipo de sangre
     -ptupla: tupla con tipos de  sangre
     salidas:
     ptupla[ptipo-1]: tipo de sangre
     """
-    return ptupla[ptipo-1]
+    if metodo=="TP": #tipo de sangre
+        return ptupla[ptipo-1]
+    if metodo=="NTP": #numero del tipo de sangre
+        for i in range(len(ptupla)):
+            if ptupla[i]==ptipo:
+                return[i]
+        return
+    return
+
 
 def generarNombreGenero():
     """
@@ -119,10 +126,13 @@ def generarSexo():
     entrada: no hay
     salida: bool(random.randint(0,1)): genero aleatorio
     """
-    return bool(random.randint(0,1))
+    return bool(random.choice([True, False]))
 
 def generarFechaN():
     """
+    funcion: genera una fecha aleatoria
+    entradas: no hay
+    salidas: (dia,mes,anno): tupla con fecha separada en dia, mes y año
     """
     annoActual=int(datetime.now().strftime("%Y"))
     anno=random.randint(annoActual-65, annoActual-18)
@@ -139,9 +149,21 @@ def generarFechaN():
     return (dia,mes,anno)
 
 def generarPeso():
+    """
+    funcion: gener aun peso aleatorio entre 51 y 119 kg
+    entradas: no hay
+    salidas: random.randint(51,119) numero aleatorio entre 51 y 119
+    """
     return random.randint(51,119)
 
 def generarCorreo(pnombre):
+    """
+    funcion genera un correo con formato aleatorio dependiendo del nombre de la persona
+    entrada:
+    -pnombre: nombre de la persona a la que se le generará el nombre
+    salidas:
+    -correo: correo construido aleatoriamente
+    """
     correo=""
     probTipo=random.randint(1,4)
     probCorreo=random.randint(0,1)
@@ -168,6 +190,12 @@ def generarCorreo(pnombre):
     return correo
 
 def generarTelefono():
+    """
+    funcion: genera un numero de telefono aleatorio
+    entradas: no hay
+    salidas:
+    -num: numero construido despues de generarse aleatoriamente
+    """
     num=str(random.randint(2,9))
     while True:
         if num!="3" and num!="5":
@@ -181,12 +209,23 @@ def generarTelefono():
     return num
 
 def generarEstado():
+    """
+    genera un estado aleatorio con 75% de probabilidad de ser 1
+    entradas: no hay
+    salidas: int: 1 o 0
+    """
     prob=random.randint(0,100)
     if prob>=0 and prob<=75:
         return 1
     return 0
 
 def generarJustificacion():
+    """
+    funcion: genera alatoriamente una justificacion en caso de que su estado aleatorio hubiera sido 0
+    entradas: no hay
+    salidas:
+    -random.randint(1,7): numero aleatorio entre 1 y 7
+    """
     return random.randint(1,7)
 
 def generarDonantes(pdonantes,pbaseDatos):
@@ -204,5 +243,5 @@ def generarDonantes(pdonantes,pbaseDatos):
             justific=0
         else:
             justific=generarJustificacion()
-        donantes.append([tuple(nombre),cedula,tipoSangre,sexo,fechaN,peso,correo,telefono,estado,justific])
+        donantes.append([tuple(nombre),cedula,tipoSangre,sexo,fechaN,float(peso),correo,telefono,estado,justific])
     return donantes
