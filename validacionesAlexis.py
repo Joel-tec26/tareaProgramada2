@@ -7,9 +7,14 @@ archivoDonadores = "donadores.dat"
 baseDatos=cargarDatosDesdeArchivo()
 tipoSangre=("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
-print(baseDatos)
-
 def validarCantidad(pcantidad):
+    """
+    funcion: verifica que una cantidad es entera y mayor a 0
+    entradas:
+    -pcantidad(int) numero ingresado por el usuario
+    salidas:
+    -bool: si es o no valido
+    """
     try:
         cantidad = int(pcantidad)
         return 0 < cantidad 
@@ -17,6 +22,13 @@ def validarCantidad(pcantidad):
         return False
     
 def actualizarMatrizEnArchivo(matrizGuardar):
+    """
+    funcion: guarda la matriz actualizada en archivo, reemplazando lo viejo con lo nuevo
+    entradas:
+    -matrizGuardar: matriz nueva
+    salidas:
+    -no hay
+    """
     with open(archivoDonadores, "wb") as archivo:
         pickle.dump(matrizGuardar, archivo)
     return
@@ -36,7 +48,19 @@ def normalizarNombre(nombreSucio):
     return tuple(" ".join(nombreSucio.strip().split()).title().split())
 
 def generarDonantesAux(pbaseDatos):
+    """
+    funcion: Mostrar la ventana y genera la cantidad de donantes que uno quiera.
+    entradas:
+    - pbaseDatos: matriz de donadores.
+    salidas:
+    - pbaseDatos: matriz de donadores actualizada.
+    """
     def generar():
+        """
+        funcion: valida entradas genera los donantes
+        entradas: ninguna
+        salidas: ninguna
+        """
         cantidad = entradaCantidad.get().strip()
         if not validarCantidad(cantidad):
             messagebox.showwarning("Aviso","debe escribir un valor numerico mayor a 0")
@@ -44,16 +68,21 @@ def generarDonantesAux(pbaseDatos):
         for i in generarDonantes(int(cantidad),pbaseDatos):
             pbaseDatos.append(i)
         guardarMatrizEnArchivo(pbaseDatos)
-        regresar()
+        limpiar()
     
     def limpiar():
+        """
+        funcion:
+        Limpiar los campos del formulario de registro.
+        entradas:
+        - Ninguna.
+        salidas:
+        - Ninguna.
+        """
         entradaCantidad.delete(0, tk.END)
 
-    def regresar():
-        ventana.destroy()
-
     ventana = tk.Tk()
-    ventana.title("Insertar donador")
+    ventana.title("Generar Donante/s")
     ventana.geometry("550x360")
     tk.Label(ventana, text="Generar Donante/s", font=("Arial", 20)).grid(row=0, column=1, sticky="w", padx=10, pady=5)
     tk.Label(ventana, text="Cantidad de Donantes").grid(row=1, column=0, sticky="w", padx=10, pady=5)
@@ -63,18 +92,32 @@ def generarDonantesAux(pbaseDatos):
     marcoBotones.grid(row=8, column=0, columnspan=3, pady=15)
     tk.Button(marcoBotones, text="Generar", command=generar, width=10).pack(side="left", padx=5)
     tk.Button(marcoBotones, text="Limpiar", command=limpiar, width=10).pack(side="left", padx=5)
-    tk.Button(marcoBotones, text="Regresar", command=regresar, width=10).pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", command=lambda: ventana.destroy(), width=10).pack(side="left", padx=5)
     ventana.mainloop()
     return pbaseDatos
 
 def actualizarDonanteAux(pbaseDatos):
+    """
+    funcion: Mostrar la ventana para actualizar un donante.
+    entradas:
+    - pbaseDatos: matriz de donadores.
+    salidas:
+    - pbaseDatos: matriz de donadores actualizada.
+    """
     def actualizar():
+        """
+        funcion: valida entradas y actualiza a un donante
+        entradas: ninguna
+        salidas: ninguna
+        """
         if pbaseDatos==[]:
             messagebox.showwarning("Aviso", "no hay ningun paciente registrado")
             return
         cedula = entradaCedula.get().strip()
         nombre = entradaNombre.get().strip()
         fechaNac = entradaFecha.get().strip()
+        dia, mes, anno = map(int, fechaNac.split("/"))
+        tuplaFecha = (dia, mes, anno)
         tipoSangre = sacarTipoSangre("NTP", comboSangre.get(), ("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"))
         sexo = varSexo.get()
         peso = entradaPeso.get().strip()
@@ -106,15 +149,23 @@ def actualizarDonanteAux(pbaseDatos):
             return
         confirmacion = messagebox.askyesno("Confirmar acción", f"¿Está seguro de que desea inactivar al donador con cédula {cedula}?")
         if confirmacion:
-            nuevoRegistro = [normalizarNombre(nombre), cedula, fechaNac, tipoSangre, sexo, int(peso), telefono, correo]
+            nuevoRegistro = [normalizarNombre(nombre), cedula, tuplaFecha, tipoSangre, sexo, int(peso), telefono, correo]
             pbaseDatos[posicion]=nuevoRegistro
             actualizarMatrizEnArchivo(pbaseDatos)
             messagebox.showinfo("Información", "Donador actualizado satisfactoriamente.")
-            regresar()
+            limpiar()
         else:
             messagebox.showinfo("Información", "Donador NO actualizado.")    
 
     def limpiar():
+        """
+        funcion:
+        Limpiar los campos del formulario de registro.
+        entradas:
+        - Ninguna.
+        salidas:
+        - Ninguna.
+        """
         entradaCedula.delete(0, tk.END)
         entradaNombre.delete(0, tk.END)
         entradaFecha.delete(0, tk.END)
@@ -123,9 +174,6 @@ def actualizarDonanteAux(pbaseDatos):
         entradaPeso.delete(0, tk.END)
         entradaTelefono.delete(0, tk.END)
         entradaCorreo.delete(0, tk.END)
-
-    def regresar():
-        ventana.destroy()
 
     ventana = tk.Tk()
     ventana.title("Insertar donador")
@@ -170,13 +218,6 @@ def actualizarDonanteAux(pbaseDatos):
     marcoBotones.grid(row=9, column=0, columnspan=3, pady=15)
     tk.Button(marcoBotones, text="Actualizar", command=actualizar, width=10, cursor="hand2").pack(side="left", padx=5)
     tk.Button(marcoBotones, text="Limpiar", command=limpiar, width=10, cursor="hand2").pack(side="left", padx=5)
-    tk.Button(marcoBotones, text="Regresar", command=regresar, width=10, cursor="hand2").pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", command=lambda:ventana.destroy(), width=10, cursor="hand2").pack(side="left", padx=5)
     ventana.mainloop()
     return pbaseDatos
-
-
-generarDonantesAux(baseDatos)
-print(baseDatos)
-baseDatos=actualizarDonanteAux(baseDatos)
-print(baseDatos)
-input
