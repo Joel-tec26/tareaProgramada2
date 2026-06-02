@@ -27,6 +27,15 @@ provinciasDiccionario = {
 
 # Pickle
 def cargarDatosDesdeArchivo():
+    """
+   función:Carga la lista de donadores almacenada en el archivo binario.
+    Entradas:
+        No recibe parámetros.
+    Salidas:
+        list: Lista de donadores cargada desde el archivo.
+              Retorna una lista vacía si el archivo no existe
+              o si ocurre un error de lectura.
+    """
     try:
         with open(archivoDonadores, "rb") as archivo:
             return pickle.load(archivo, encoding="utf-8")
@@ -36,12 +45,27 @@ def cargarDatosDesdeArchivo():
         return []
 
 def guardarMatrizEnArchivo(matrizGuardar):
+    """
+    funcion: Guardar la matriz de donadores en un archivo binario.
+    entradas:
+    - matrizGuardar: matriz con la información de los donadores.
+    salidas:
+    - Ninguna.
+    """
     with open(archivoDonadores, "wb") as archivo:
         pickle.dump(matrizGuardar, archivo)
     return
 # procesar
 
 def buscarDonador(cedulaTarget, matrizABuscar):
+    """
+    funcion: Buscar un donador mediante búsqueda binaria.
+    entradas:
+    - cedulaTarget: cédula a buscar.
+    - matrizABuscar: matriz ordenada de donadores.
+    salidas:
+    - Tupla con el resultado de la búsqueda y la posición encontrada o de inserción.
+    """
     cedulaInt = int(cedulaTarget.replace("-", ""))
     izquierda = 0
     derecha = len(matrizABuscar) - 1
@@ -60,16 +84,38 @@ def buscarDonador(cedulaTarget, matrizABuscar):
     return False, izquierda
 
 def calcularEdad(fechaNacimientoStr):
+    """
+    funcion: Calcular la edad a partir de una fecha de nacimiento.
+    entradas:
+    - fechaNacimientoStr: fecha en formato DD/MM/AAAA.
+    salidas:
+    - Edad calculada en años.
+    """
     hoy = datetime.now()
     fechaNac = datetime.strptime(fechaNacimientoStr, "%d/%m/%Y")
     return hoy.year - fechaNac.year - ((hoy.month, hoy.day) < (fechaNac.month, fechaNac.day))
 
 def obtenerMensajeEdad(fechaNacimientoStr):
+    """
+    funcion: Generar un mensaje según la edad del posible donador.
+    entradas:
+    - fechaNacimientoStr: fecha en formato DD/MM/AAAA.
+    salidas:
+    - Mensaje indicando si puede donar sangre.
+    """
     if calcularEdad(fechaNacimientoStr) >= 18:
         return "Dado su fecha de nacimiento usted ya puede ser donador."
     return "Dado su fecha de nacimiento usted aún no puede ser donador."
 
 def obtenerLugarDonacion(cedula, pprovincias):
+    """
+    funcion: Obtener los lugares sugeridos para donar según la provincia.
+    entradas:
+    - cedula: cédula de la persona.
+    - pprovincias: diccionario con provincias y hospitales.
+    salidas:
+    - Mensaje con los lugares de donación recomendados.
+    """
     primerDigito = cedula[0]
     if primerDigito == "8":
         return "Casos especiales de las cédulas que donen en San José. Centro asignado Sede Central de Donación."
@@ -80,6 +126,13 @@ def obtenerLugarDonacion(cedula, pprovincias):
     return "Provincia no encontrada."
 
 def obtenerMensajePeso(pesoStr):
+    """
+    funcion: Generar un mensaje según el peso ingresado.
+    entradas:
+    - pesoStr: peso de la persona.
+    salidas:
+    - Mensaje relacionado con la aptitud para donar.
+    """
     peso = float(pesoStr)
     if peso <= 50:
         return "Usted debe pesar más de 50 kgms para poder ser donador."
@@ -88,6 +141,13 @@ def obtenerMensajePeso(pesoStr):
     return "Dado su sobre peso, no es posible donar sangre."
 
 def obtenerInformacionResaltadaSangre(tipoSangreStr):
+    """
+    funcion: Brindar información y recomendaciones según el tipo de sangre.
+    entradas:
+    - tipoSangreStr: tipo de sangre del donador.
+    salidas:
+    - Mensaje con recomendaciones de donación.
+    """
     tipoSangreStr = tipoSangreStr.upper()
     recomendaciones = {
         "A+": "se les recomienda que donen sangre entera y plaquetas.",
@@ -108,10 +168,24 @@ def obtenerInformacionResaltadaSangre(tipoSangreStr):
 # Validaciones
 
 def validarCedula(cedula):
+    """
+    funcion: Verificar que la cédula cumpla con el formato permitido.
+    entradas:
+    - cedula: cédula a validar.
+    salidas:
+    - True si la cédula es válida, False en caso contrario.
+    """
     patron = r"^[1-9]-\d{3,5}-\d{3,4}$"
     return bool(re.match(patron, cedula))
 
 def validarFechaNacimiento(fechaStr):
+    """
+    funcion: Verificar que la fecha tenga un formato válido.
+    entradas:
+    - fechaStr: fecha en formato DD/MM/AAAA.
+    salidas:
+    - True si la fecha es válida, False en caso contrario.
+    """
     try:
         datetime.strptime(fechaStr, "%d/%m/%Y")
         return True
@@ -119,14 +193,35 @@ def validarFechaNacimiento(fechaStr):
         return False
 
 def validarCorreo(correo):
+    """
+    funcion: Verificar que el correo pertenezca a un dominio permitido.
+    entradas:
+    - correo: dirección de correo electrónico.
+    salidas:
+    - True si el correo es válido, False en caso contrario.
+    """
     patron = r"^[a-zA-Z0-9._%+-]+@(costarricense\.cr|racsa\.go\.cr|ccss\.sa\.cr|gmail\.com)$"
     return bool(re.match(patron, correo))
 
 def validarTelefono(telefono):
+    """
+    funcion: Verificar que el número telefónico tenga el formato correcto.
+    entradas:
+    - telefono: número telefónico.
+    salidas:
+    - True si el teléfono es válido, False en caso contrario.
+    """
     patron = r"^[246789]\d{3}-\d{4}$"
     return bool(re.match(patron, telefono))
 
 def validarPeso(pesoStr):
+    """
+    funcion: Verificar que el peso esté dentro del rango permitido.
+    entradas:
+    - pesoStr: peso de la persona.
+    salidas:
+    - True si el peso es válido, False en caso contrario.
+    """
     try:
         peso = float(pesoStr)
         return 50.0 < peso < 120.0
@@ -135,7 +230,23 @@ def validarPeso(pesoStr):
 
 # aux
 def insertarDonadorAux(matrizDonadores, pprovincias):
+    """
+    funcion: Mostrar la ventana para registrar un nuevo donador.
+    entradas:
+    - matrizDonadores: matriz de donadores.
+    - pprovincias: diccionario con provincias y lugares de donación.
+    salidas:
+    - Ninguna.
+    """
     def registrar():
+        """
+        funcion:
+        Validar y registrar un nuevo donador en la matriz.
+        entradas:
+        - Ninguna. Obtiene los datos desde los componentes de la ventana.
+        salidas:
+        - Ninguna.
+        """
         cedula = entradaCedula.get().strip()
         nombreCompletoStr = entradaNombreCompleto.get().strip()
         fechaNac = entradaFecha.get().strip()
@@ -202,6 +313,14 @@ def insertarDonadorAux(matrizDonadores, pprovincias):
         limpiar()
 
     def limpiar():
+        """
+        funcion:
+        Limpiar los campos del formulario de registro.
+        entradas:
+        - Ninguna.
+        salidas:
+        - Ninguna.
+        """
         entradaCedula.delete(0, tk.END)
         entradaNombreCompleto.delete(0, tk.END)
         entradaFecha.delete(0, tk.END)
@@ -248,7 +367,22 @@ def insertarDonadorAux(matrizDonadores, pprovincias):
 # eliminar donador
 
 def eliminarDonadorAux(matrizDonadores):
+    """
+    funcion: Mostrar la ventana para inactivar un donador registrado.
+    entradas:
+    - matrizDonadores: matriz de donadores.
+    salidas:
+    - Ninguna.
+    """
     def ProcesarInactivacion():
+        """
+        funcion:
+        Inactivar un donador y registrar la causa de rechazo.
+        entradas:
+        - Ninguna. Obtiene los datos desde la ventana.
+        salidas:
+        - Ninguna.
+        """
         cedula = entradaCedula.get().strip()
         justificacionTexto = comboJustificacion.get()
         if not validarCedula(cedula):
@@ -305,6 +439,13 @@ def eliminarDonadorAux(matrizDonadores):
 # ingresar lugar de donacion
 
 def insertarLugarDonacionAux():
+    """
+    funcion: Mostrar la ventana para agregar nuevos lugares de donación.
+    entradas:
+    - Ninguna.
+    salidas:
+    - Ninguna.
+    """
     ventanaLugares = tk.Toplevel()
     ventanaLugares.title("Insertar lugar de donación")
     ventanaLugares.geometry("350x250")
@@ -317,6 +458,14 @@ def insertarLugarDonacionAux():
     entradaLugar.pack(pady=5)
     
     def insertarLugar():
+        """
+        funcion:
+        Agregar un nuevo lugar de donación a una provincia.
+        entradas:
+        - Ninguna. Obtiene los datos desde la ventana.
+        salidas:
+        - Ninguna.
+        """
         seleccion = comboProvincia.get()
         nuevoLugar = entradaLugar.get().strip()
         if not seleccion:
@@ -343,6 +492,13 @@ def insertarLugarDonacionAux():
 donadores = cargarDatosDesdeArchivo()
 
 def menuPrincipal():
+    """
+    funcion: Mostrar el menú principal del sistema.
+    entradas:
+    - Ninguna.
+    salidas:
+    - Ninguna.
+    """
     root = tk.Tk()
     root.title("Sistema Banco de Sangre")
     root.geometry("400x350")
@@ -392,12 +548,31 @@ def menuPrincipal():
 # reporte1
 
 def validarSeleccionProvincia(provinciaSeleccionada):
+    """
+    funcion:
+    Valida que el usuario haya seleccionado una provincia.
+    entradas:
+    - provinciaSeleccionada: cadena con la provincia elegida.
+    salidas:
+    - True si se seleccionó una provincia.
+    - False si no se seleccionó ninguna provincia.
+    """
     if not provinciaSeleccionada:
         messagebox.showwarning("Validación", "Debe seleccionar una provincia de la lista.")
         return False
     return True
 
 def procesarReportePorProvinciaHtml(idProvinciaSeleccionada, pdonadores, pprovincias):
+    """
+    funcion:
+    Genera un reporte HTML con los donadores pertenecientes a una provincia específica.
+    entradas:
+    - idProvinciaSeleccionada: identificador de la provincia.
+    - pdonadores: matriz con los registros de donadores.
+    - pprovincias: diccionario con las provincias.
+    salidas:
+    - Archivo HTML generado y abierto en el navegador.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     nombreProvinciaSeleccionada = pprovincias.get(idProvinciaSeleccionada, ["Desconocida"])[0]
     filasHtml = ""
@@ -467,35 +642,73 @@ def procesarReportePorProvinciaHtml(idProvinciaSeleccionada, pdonadores, pprovin
     webbrowser.open(nombreArchivo)
 
 def reportePorProvinciaAux(pdonadores):
+    """
+    funcion:
+    Despliega la ventana para seleccionar una provincia y generar el reporte correspondiente.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    salidas:
+    - Ventana para seleccionar provincia y generar reporte.
+    """
     if not pdonadores:
         messagebox.showwarning("Aviso", "No hay donadores registrados en el sistema.")
         return
     ventanaFiltro = tk.Toplevel()
     ventanaFiltro.title("Filtrar por Provincia")
-    ventanaFiltro.geometry("350x180")
+    ventanaFiltro.geometry("350x200")
     ventanaFiltro.resizable(False, False)
     tk.Label(ventanaFiltro, text="Seleccione la provincia a consultar:").pack(pady=15)
     opcionesProvincias = [f"{clave} - {datos[0]}" for clave, datos in provinciasDiccionario.items()]
     comboProvincia = ttk.Combobox(ventanaFiltro, values=opcionesProvincias, state="readonly", width=25)
     comboProvincia.pack(pady=5)
-
     def ejecutarReporte():
+        """
+        funcion:
+        Obtiene la provincia seleccionada y ejecuta la generación del reporte.
+        entradas:
+        - Ninguna.
+        salidas:
+        - Reporte HTML por provincia.
+        """
         seleccion = comboProvincia.get()
         if validarSeleccionProvincia(seleccion):
             idProvincia = seleccion.split(" - ")[0]
             procesarReportePorProvinciaHtml(idProvincia, pdonadores, provinciasDiccionario)
             ventanaFiltro.destroy()
-    tk.Button(ventanaFiltro, text="Generar Reporte", command=ejecutarReporte, bg="#c0392b", fg="white").pack(pady=15)
+    marcoBotones = tk.Frame(ventanaFiltro)
+    marcoBotones.pack(pady=15)
+    tk.Button(marcoBotones, text="Generar Reporte", command=ejecutarReporte, width=15).pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", command=ventanaFiltro.destroy, width=15).pack(side="left", padx=5)
+    
 
 # reporte 2
 
 def validarSeleccionSangre(tipoSangre):
+    """
+    funcion:
+    Valida que el usuario haya seleccionado un tipo de sangre.
+    entradas:
+    - tipoSangre: cadena con el tipo de sangre seleccionado.
+    salidas:
+    - True si existe una selección.
+    - False en caso contrario.
+    """
     if not tipoSangre:
         messagebox.showwarning("Validación", "Debe seleccionar un tipo de sangre de la lista.")
         return False
     return True
 
 def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias):
+    """
+    funcion:
+    Genera un reporte HTML con los donadores de un tipo de sangre específico.
+    entradas:
+    - tipoSangreSeleccionado: tipo de sangre a consultar.
+    - pdonadores: matriz con los registros de donadores.
+    - pprovincias: diccionario con las provincias.
+    salidas:
+    - Archivo HTML generado y abierto en el navegador.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     filasHtml = ""
     contadorFilas = 0
@@ -563,40 +776,79 @@ def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias
     webbrowser.open(nombreArchivo)
 
 def reportePorSangreAux(pdonadores):
+    """
+    funcion:
+    Despliega la ventana para seleccionar un tipo de sangre y generar el reporte.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    salidas:
+    - Ventana para generar el reporte.
+    """
     if not pdonadores:
         messagebox.showwarning("Aviso", "No hay donadores registrados en el sistema.")
         return
     ventanaFiltro = tk.Toplevel()
     ventanaFiltro.title("Filtrar por Sangre")
-    ventanaFiltro.geometry("300x180")
+    ventanaFiltro.geometry("300x200")
     ventanaFiltro.resizable(False, False)
     tk.Label(ventanaFiltro, text="Seleccione el tipo de sangre:").pack(pady=15)
     opcionesSangre = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
     comboSangre = ttk.Combobox(ventanaFiltro, values=opcionesSangre, state="readonly", width=15)
     comboSangre.pack(pady=5)
-
     def ejecutarReporte():
+        """
+        funcion:
+        Obtiene el tipo de sangre seleccionado y genera el reporte correspondiente.
+        entradas:
+        - Ninguna.
+        salidas:
+        - Reporte HTML por tipo de sangre.
+        """
         seleccion = comboSangre.get()
         if validarSeleccionSangre(seleccion):
             procesarReportePorSangreHtml(seleccion, pdonadores, provinciasDiccionario)
             ventanaFiltro.destroy()
-    tk.Button(ventanaFiltro, text="Generar Reporte", command=ejecutarReporte, bg="#5cb85c", fg="white").pack(pady=15)
+    marcoBotones = tk.Frame(ventanaFiltro)
+    marcoBotones.pack(pady=15)
+    tk.Button(marcoBotones, text="Generar Reporte", command=ejecutarReporte, width=15).pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", command=ventanaFiltro.destroy, width=15).pack(side="left", padx=5)
 
 # reporte 3
 def validarFiltrosTipoSangreProvincia(pseleccionProvincia, pseleccionSangre):
+    """
+    funcion:
+    Valida que se haya seleccionado una provincia y un tipo de sangre.
+    entradas:
+    - pseleccionProvincia: provincia seleccionada.
+    - pseleccionSangre: tipo de sangre seleccionado.
+    salidas:
+    - True si ambos filtros son válidos.
+    - False en caso contrario.
+    """
     if not pseleccionProvincia or not pseleccionSangre:
         messagebox.showwarning("Aviso", "Debe seleccionar una provincia y un tipo de sangre para generar el reporte.")
         return False
     return True
 
 def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreProvincia, ptipoSangre):
+    """
+    funcion:
+    Genera un reporte HTML de donadores activos filtrados por provincia y tipo de sangre.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    - pclaveProvincia: identificador de la provincia.
+    - pnombreProvincia: nombre de la provincia.
+    - ptipoSangre: tipo de sangre a consultar.
+    salidas:
+    - Archivo HTML generado y abierto en el navegador.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     filasHtml = ""
     contadorFilas = 0
     for donador in pdonadores:
         cedula = str(donador[1])
         tipoSangreDonador = tipoSangre[donador[2]]
-        estado = donador[8] # 1 es Activo
+        estado = donador[8] 
         if estado == 1 and cedula[0] == pclaveProvincia and tipoSangreDonador == ptipoSangre:
             contadorFilas += 1
             nombreCompleto = " ".join(donador[0])
@@ -656,6 +908,15 @@ def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreP
 
 def reporteTipoSangreProvinciaAux(pcomboProvincia, pcomboSangre, pdonadores, pprovinciasDiccionario):
     """
+    funcion:
+    Obtiene los filtros seleccionados y coordina la generación del reporte por provincia y tipo de sangre.
+    entradas:
+    - pcomboProvincia: combobox de provincias.
+    - pcomboSangre: combobox de tipos de sangre.
+    - pdonadores: matriz con los registros de donadores.
+    - pprovinciasDiccionario: diccionario de provincias.
+    salidas:
+    - Reporte generado o mensaje de error.
     """
     seleccionProvincia = pcomboProvincia.get().strip()
     seleccionSangre = pcomboSangre.get().strip()
@@ -680,39 +941,89 @@ def reporteTipoSangreProvinciaAux(pcomboProvincia, pcomboSangre, pdonadores, ppr
         messagebox.showerror("Error", f"Ocurrió un fallo inesperado al construir el reporte: {str(error)}")
 
 def ventanaReporteTipoSangreProvincia():
+    """
+    funcion:
+    Crea la ventana para seleccionar provincia y tipo de sangre.
+    entradas:
+    - Ninguna.
+    salidas:
+    - Ventana gráfica para generar el reporte.
+    """
     ventana = tk.Toplevel()
+    ventana.title("Reporte por Tipo de Sangre y Provincia")
+    ventana.geometry("400x250")
+    ventana.resizable(False, False)
+    tk.Label(
+        ventana,
+        text="Reporte por Tipo de Sangre y Provincia",
+        font=("Arial", 12, "bold")
+    ).pack(pady=(15, 10))
+    marco = tk.Frame(ventana)
+    marco.pack(padx=20, pady=5)
+    tk.Label(marco, text="Provincia:", anchor="w", width=15).grid(row=0, column=0, sticky="w", pady=8)
     comboProvincia = ttk.Combobox(
-        ventana,
+        marco,
         values=[datos[0] for datos in provinciasDiccionario.values()],
-        state="readonly"
+        state="readonly",
+        width=25
     )
-    comboProvincia.pack()
+    comboProvincia.grid(row=0, column=1, sticky="w", pady=8)
+    tk.Label(marco, text="Tipo de Sangre:", anchor="w", width=15).grid(row=1, column=0, sticky="w", pady=8)
     comboSangre = ttk.Combobox(
-        ventana,
+        marco,
         values=tipoSangre,
-        state="readonly"
+        state="readonly",
+        width=25
     )
-    comboSangre.pack()
+    comboSangre.grid(row=1, column=1, sticky="w", pady=8)
+    marcoBotones = tk.Frame(ventana)
+    marcoBotones.pack(pady=15)
     tk.Button(
-        ventana,
-        text="Generar",
+        marcoBotones,
+        text="Generar Reporte",
+        width=15,
         command=lambda: reporteTipoSangreProvinciaAux(
             comboProvincia,
             comboSangre,
             donadores,
             provinciasDiccionario
         )
-    ).pack()
+    ).pack(side="left", padx=5)
+    tk.Button(
+        marcoBotones,
+        text="Regresar",
+        width=15,
+        command=ventana.destroy
+    ).pack(side="left", padx=5)
 
 # reporte 4
 
 def validarMatrizDonadoresReporteGeneral(pdonadores):
+    """
+    funcion:
+    Verifica que existan donadores registrados para generar el reporte general.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    salidas:
+    - True si existen registros.
+    - False en caso contrario.
+    """
     if not pdonadores:
         messagebox.showwarning("Aviso", "No existen donadores registrados en el sistema para generar el reporte.")
         return False
     return True
 
 def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
+    """
+    funcion:
+    Genera un reporte HTML general con todos los donadores activos agrupados por provincia.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    - pprovinciasDiccionario: diccionario de provincias.
+    salidas:
+    - True si el reporte fue generado correctamente.
+    - False si ocurrió un error.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     filasHtml = ""
@@ -794,6 +1105,15 @@ def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
         return False
     
 def reporteGeneralDonadoresAux(pdonadores, pprovinciasDiccionario):
+    """
+    funcion:
+    Coordina la validación y generación del reporte general de donadores.
+    entradas:
+    - pdonadores: matriz con los registros de donadores.
+    - pprovinciasDiccionario: diccionario de provincias.
+    salidas:
+    - Reporte generado o mensaje de error.
+    """
     if not validarMatrizDonadoresReporteGeneral(pdonadores):
         return  
     fueCreadoExitosamente = procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario)
@@ -805,12 +1125,30 @@ def reporteGeneralDonadoresAux(pdonadores, pprovinciasDiccionario):
 # reporte 5
 
 def validarMatrizDonadores(pDonadores):
+    """
+    Funcionalidad:
+    Valida que la matriz de donadores exista y contenga registros antes de procesar un reporte.
+    Entradas:
+    - pDonadores (list): Matriz de donadores registrada en el sistema.
+    Salidas:
+    - True: Si existen registros en la matriz.
+    - False: Si la matriz está vacía o no existe.
+    """
     if not pDonadores or len(pDonadores) == 0:
         messagebox.showwarning("Aviso", "No existen donadores registrados en el sistema para procesar.")
         return False
     return True
 
 def calcularEdadExacta(pFechaNacimientoStr):
+    """
+    Funcionalidad:
+    Calcula la edad exacta de una persona utilizando su fecha de nacimiento.
+    Entradas:
+    - pFechaNacimientoStr (str): Fecha de nacimiento en formato DD/MM/AAAA.
+    Salidas:
+    - edad (int): Edad calculada en años.
+    - 0: Si ocurre un error durante el cálculo.
+    """
     try:
         fechaNacimiento = datetime.strptime(pFechaNacimientoStr, "%d/%m/%Y")
         fechaHoy = datetime.now()
@@ -821,8 +1159,16 @@ def calcularEdadExacta(pFechaNacimientoStr):
     except Exception:
         return 0
 
-
 def procesarReporteMujeresOMinusculasHtml(pDonadores):
+    """
+    Funcionalidad:
+    Genera un reporte HTML con las mujeres donadoras activas de tipo O- menores de 45 años, ordenadas ascendentemente por edad.
+    Entradas:
+    - pDonadores (list): Matriz con los registros de donadores.
+    Salidas:
+    - True: Si el reporte fue creado correctamente.
+    - False: Si no existen registros que cumplan la condición o si ocurre un error.
+    """
     fechaHoraSistema = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     listaFiltrada = []
@@ -913,6 +1259,14 @@ def procesarReporteMujeresOMinusculasHtml(pDonadores):
         return False
 
 def reporteMujeresOMinusculasAux(pDonadores):
+    """
+    Funcionalidad:
+    Coordina la validación y generación del reporte de mujeres donadoras O- menores de 45 años.
+    Entradas:
+    - pDonadores (list): Matriz con los registros de donadores.
+    Salidas:
+    - Ninguna.
+    """
     if not validarMatrizDonadores(pDonadores):
         return
     fueCreadoExitosamente = procesarReporteMujeresOMinusculasHtml(pDonadores)
@@ -925,12 +1279,31 @@ def reporteMujeresOMinusculasAux(pDonadores):
 # reporte 6
 
 def validarFiltroCompatibilidadDonacion(pTipoSangreSeleccionado):
+    """
+    Funcionalidad:
+    Verifica que el usuario haya seleccionado un tipo de sangre antes de generar el reporte de compatibilidad.
+    Entradas:
+    - pTipoSangreSeleccionado (str): Tipo de sangre elegido por el usuario.
+    Salidas:
+    - True: Si existe una selección válida.
+    - False: Si no se seleccionó ningún tipo de sangre.
+    """
     if not pTipoSangreSeleccionado:
         messagebox.showwarning("Aviso", "Por favor, seleccione un tipo de sangre para continuar.")
         return False
     return True
 
 def esDonadorCompatible(pTipoDonador, pTipoReceptor):
+    """
+    Funcionalidad:
+    Determina si un tipo de sangre donador es compatible para donar a un tipo de sangre receptor.
+    Entradas:
+    - pTipoDonador (str): Tipo de sangre del donador.
+    - pTipoReceptor (str): Tipo de sangre del receptor.
+    Salidas:
+    - True: Si existe compatibilidad de donación.
+    - False: Si no existe compatibilidad.
+    """
     if pTipoDonador == "O-":
         return True
     if pTipoDonador == "O+":
@@ -950,9 +1323,19 @@ def esDonadorCompatible(pTipoDonador, pTipoReceptor):
     return False
 
 def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario, pTipoReceptor):
+    """
+    Funcionalidad:
+    Genera un reporte HTML con los donadores activos compatibles para abastecer a un receptor de un tipo de sangre específico.
+    Entradas:
+    - pDonadores (list): Matriz de donadores registrados.
+    - pProvinciasDiccionario (dict): Diccionario con la información de provincias.
+    - pTipoReceptor (str): Tipo de sangre del receptor.
+    Salidas:
+    - True: Si el reporte fue generado correctamente.
+    - False: Si no se encontraron donadores compatibles o ocurrió un error.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
-    
     filasHtml = ""
     contadorTotalDonadores = 0
     for claveProvincia in sorted(pProvinciasDiccionario.keys()):
@@ -965,7 +1348,6 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
             idProvinciaDonador = cedula[0]
             estado = donador[8]  
             if estado == 1 and idProvinciaDonador == claveProvincia and esDonadorCompatible(tipoDonador, pTipoReceptor):
-
                 contadorProvincia += 1
                 contadorTotalDonadores += 1
                 nombreCompleto = " ".join(donador[0])
@@ -983,7 +1365,6 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
             <td colspan="5" style="text-align: center;">PROVINCIA: {nombreProvincia.upper()} ({contadorProvincia} compatibles)</td>
         </tr>\n"""
             filasHtml += filasProvincia
-
     if contadorTotalDonadores == 0:
         messagebox.showinfo("Información", f"No se encontraron donadores activos compatibles para abastecer al tipo {pTipoReceptor}.")
         return False
@@ -1037,6 +1418,16 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
         return False
 
 def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSangreTupla):
+    """
+    Funcionalidad:
+    Despliega la ventana de selección y coordina la generación del reporte de compatibilidad de donación.
+    Entradas:
+    - pDonadores (list): Matriz de donadores registrados.
+    - pProvinciasDiccionario (dict): Diccionario de provincias.
+    - pTipoSangreTupla (tuple): Tupla con los tipos de sangre disponibles.
+    Salidas:
+    - Ninguna.
+    """
     ventanaCompatibilidad = tk.Toplevel()
     ventanaCompatibilidad.title("¿A quién puede donar?")
     ventanaCompatibilidad.geometry("360x220")
@@ -1057,6 +1448,14 @@ def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSa
     marcoBotones.pack(pady=20)
     
     def ejecutarAccionGenerar():
+        """
+        Funcionalidad:
+        Ejecuta el proceso de validación y generación del reporte de compatibilidad de donación según el tipo de sangre seleccionado por el usuario.
+        Entradas:
+        - Ninguna. Utiliza las variables disponibles en el ámbito de la ventana.
+        Salidas:
+        - Ninguna.
+        """
         seleccionSangre = comboSangre.get().strip()
         if not validarFiltroCompatibilidadDonacion(seleccionSangre):
             return  
@@ -1088,12 +1487,31 @@ def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSa
 # reporte 7
 
 def validarCamposCompatibilidad(pTipoSangreSeleccionado):
+    """
+    Funcionalidad:
+    Valida que el usuario haya seleccionado un tipo de sangre para generar el reporte de compatibilidad de recepción.
+    Entradas:
+    - pTipoSangreSeleccionado (str): Tipo de sangre seleccionado.
+    Salidas:
+    - True: Si el tipo de sangre es válido.
+    - False: Si no existe selección.
+    """
     if not pTipoSangreSeleccionado or pTipoSangreSeleccionado == "":
         messagebox.showerror("Error de Validación", "Por favor, seleccione un tipo de sangre de la lista.")
         return False
     return True
 
 def procesarReporteCompatibilidadHtml(pDonadores, pTipoSangreObjetivo):
+    """
+    Funcionalidad:
+    Genera un reporte HTML con los donadores activos compatibles para un receptor de un tipo de sangre determinado.
+    Entradas:
+    - pDonadores (list): Matriz de donadores registrados.
+    - pTipoSangreObjetivo (str): Tipo de sangre del receptor.
+    Salidas:
+    - True: Si el reporte se genera correctamente.
+    - False: Si no existen donadores compatibles o ocurre un error.
+    """
     tablaCompatibilidad = {
         "O-":  ["O-"],
         "O+":  ["O+", "O-"],
@@ -1195,6 +1613,15 @@ def procesarReporteCompatibilidadHtml(pDonadores, pTipoSangreObjetivo):
         return False
 
 def reporteCompatibilidadRecibirAux(pDonadores, pTipoSangreTupla):
+    """
+    Funcionalidad:
+    Despliega la ventana de selección y coordina la generación del reporte de compatibilidad para recibir sangre.
+    Entradas:
+    - pDonadores (list): Matriz de donadores registrados.
+    - pTipoSangreTupla (tuple): Tupla con los tipos de sangre disponibles.
+    Salidas:
+    - Ninguna.
+    """
     ventanaCompatibilidad = tk.Toplevel()
     ventanaCompatibilidad.title("Compatibilidad de Receptores")
     ventanaCompatibilidad.geometry("380x200")
@@ -1228,9 +1655,7 @@ def reporteCompatibilidadRecibirAux(pDonadores, pTipoSangreTupla):
     btnGenerar = tk.Button(
         marcoBotones, 
         text="Generar reporte", 
-        width=15, 
-        bg="#16a085", 
-        fg="white",
+        width=15,
         command=ejecutarGeneracionReporte
     )
     btnGenerar.pack(side="left", padx=10)
@@ -1244,6 +1669,15 @@ def reporteCompatibilidadRecibirAux(pDonadores, pTipoSangreTupla):
 
 # Donadores inactvos
 def validarDonadoresInactivos(pmatrizDonadores):
+    """
+    Funcionalidad:
+    Verifica si existen donadores inactivos dentro de la matriz de registros.
+    Entradas:
+    - pmatrizDonadores (list): Matriz de donadores registrados.
+    Salidas:
+    - True: Si existe al menos un donador inactivo.
+    - False: Si no existen donadores inactivos.
+    """
     if not pmatrizDonadores:
         return False
     for donador in pmatrizDonadores:
@@ -1252,8 +1686,26 @@ def validarDonadoresInactivos(pmatrizDonadores):
     return False
 
 def procesarReporteInactivos(pmatrizDonadores):
+    """
+    Funcionalidad:
+    Genera un reporte HTML con los donadores inactivos y la justificación de su exclusión.
+    Entradas:
+    - pmatrizDonadores (list): Matriz de donadores registrados.
+    Salidas:
+    - True: Si el reporte se genera correctamente.
+    - False: Si ocurre un error o no existen donadores inactivos.
+    """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
     nombreArchivo = "reporteDonadoresInactivos.html"
+    causasRechazo = {
+        1: "Enfermedades Infecciosas/Crónicas",
+        2: "Conductas de Riesgo",
+        3: "Factores de Salud Física",
+        4: "Procedimientos Médicos",
+        5: "Uso de Medicamentos",
+        6: "Estilo de Vida y Viajes",
+        7: "Situaciones Específicas"
+    }
 
     try:
         with open(nombreArchivo, "w", encoding="utf-8") as archivoHtml:
@@ -1278,22 +1730,26 @@ def procesarReporteInactivos(pmatrizDonadores):
             archivoHtml.write("                <th>Teléfono</th>\n                <th>Correo</th>\n")
             archivoHtml.write("                <th>Justificación de Exclusión</th>\n")
             archivoHtml.write("            </tr>\n        </thead>\n        <tbody>\n")
-
+            hayInactivos = False
             for donador in pmatrizDonadores:
                 estado = donador[8]
                 if estado != 0:
-                    continue  # 👈 saltar activos
-
+                    continue
+                hayInactivos = True
                 cedula = donador[1]
                 nombreCompleto = " ".join(donador[0])
-                tipoSangreStr = tipoSangre[donador[2]]  
+                tipoSangreStr = tipoSangre[donador[2]]
                 sexo = "F" if donador[3] == False else "M"
                 tuplaFecha = donador[4]
                 fechaNacimiento = f"{tuplaFecha[0]:02d}/{tuplaFecha[1]:02d}/{tuplaFecha[2]}"
                 peso = donador[5]
                 correo = donador[6]
                 telefono = donador[7]
-                justificacion=donador[9]
+                if len(donador) > 9:
+                    codigoJustificacion = donador[9]
+                    justificacion = causasRechazo.get(codigoJustificacion, f"Causa desconocida (código {codigoJustificacion})")
+                else:
+                    justificacion = "Sin justificación registrada"
                 archivoHtml.write("            <tr>\n")
                 archivoHtml.write(f"                <td>{cedula}</td>\n")
                 archivoHtml.write(f"                <td>{nombreCompleto}</td>\n")
@@ -1306,21 +1762,29 @@ def procesarReporteInactivos(pmatrizDonadores):
                 archivoHtml.write(f"                <td><strong>{justificacion}</strong></td>\n")
                 archivoHtml.write("            </tr>\n")
             archivoHtml.write("        </tbody>\n    </table>\n</body>\n</html>")
-        webbrowser.open(nombreArchivo)  
+        if not hayInactivos:
+            messagebox.showinfo("Información", "No hay donadores inactivos registrados en el sistema.")
+            return False
+        webbrowser.open(nombreArchivo)
         return True
     except Exception as e:
-        print(f"Error al generar reporte: {e}")  
+        print(f"Error al generar reporte: {e}")
         return False
 
 # submenu reportes
 def submenuReportes(pventanaPadre):
-
+    """
+    Funcionalidad:
+    Despliega el submenú de reportes y permite acceder a las diferentes opciones de generación de reportes del sistema.
+    Entradas:
+    - pventanaPadre (Tk/Toplevel): Ventana desde la cual se invoca el submenú.
+    Salidas:
+    - Ninguna.
+    """
     ventanaReportes = tk.Toplevel(pventanaPadre)
-
     ventanaReportes.title("Menú de Reportes")
     ventanaReportes.geometry("450x500")
     ventanaReportes.resizable(False, False)
-
     tk.Label(
         ventanaReportes,
         text="Menú de Reportes",
@@ -1333,21 +1797,18 @@ def submenuReportes(pventanaPadre):
         width=35,
         command=lambda: reportePorProvinciaAux(donadores)
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="2. Donadores por Tipo de Sangre",
         width=35,
         command=lambda: reportePorSangreAux(donadores)
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="3. Tipo de Sangre por Provincia",
         width=35,
         command=lambda: ventanaReporteTipoSangreProvincia()
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="4. Reporte General de Donadores",
@@ -1357,14 +1818,12 @@ def submenuReportes(pventanaPadre):
             provinciasDiccionario
         )
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="5. Mujeres O- Menores de 45",
         width=35,
         command=lambda: reporteMujeresOMinusculasAux(donadores)
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="6. ¿A quién puede donar?",
@@ -1375,7 +1834,6 @@ def submenuReportes(pventanaPadre):
             tipoSangre
         )
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="7. Compatibilidad para recibir",
@@ -1385,14 +1843,12 @@ def submenuReportes(pventanaPadre):
             tipoSangre
         )
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="8. Donadores Inactivos",
         width=35,
         command=lambda: procesarReporteInactivos(donadores)
     ).pack(pady=3)
-
     tk.Button(
         ventanaReportes,
         text="Regresar",
