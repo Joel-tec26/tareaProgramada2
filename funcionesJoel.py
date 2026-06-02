@@ -41,14 +41,14 @@ def guardarMatrizEnArchivo(matrizGuardar):
     return
 # procesar
 
-def buscarDonador(cedulaTarget, matrizA_Buscar):
+def buscarDonador(cedulaTarget, matrizABuscar):
     cedulaInt = int(cedulaTarget.replace("-", ""))
     izquierda = 0
-    derecha = len(matrizA_Buscar) - 1
+    derecha = len(matrizABuscar) - 1
     
     while izquierda <= derecha:
         medio = (izquierda + derecha) // 2
-        cedulaMedio = matrizA_Buscar[medio][1] 
+        cedulaMedio = int(str(matrizABuscar[medio][1]).replace("-", ""))
         
         if cedulaMedio == cedulaInt:
             return True, medio
@@ -345,13 +345,45 @@ donadores = cargarDatosDesdeArchivo()
 def menuPrincipal():
     root = tk.Tk()
     root.title("Sistema Banco de Sangre")
-    root.geometry("400x300")
+    root.geometry("400x350")
     root.resizable(False, False)
-    tk.Label(root, text="Sistema Banco de Sangre", font=("Arial", 14, "bold")).pack(pady=20)
-    tk.Button(root, text="Insertar Donador", width=25, command=lambda: insertarDonadorAux(donadores, provinciasDiccionario)).pack(pady=5)
-    tk.Button(root, text="Eliminar Donador", width=25, command=lambda: eliminarDonadorAux(donadores)).pack(pady=5)
-    tk.Button(root, text="Insertar Lugar de Donación", width=25, command=insertarLugarDonacionAux).pack(pady=5)
-    tk.Button(root, text="Salir", width=25, command=root.destroy).pack(pady=20)
+    tk.Label(
+        root,
+        text="Sistema Banco de Sangre",
+        font=("Arial", 14, "bold")
+    ).pack(pady=20)
+    tk.Button(
+        root,
+        text="Insertar Donador",
+        width=25,
+        command=lambda: insertarDonadorAux(donadores, provinciasDiccionario)
+    ).pack(pady=5)
+    tk.Button(
+        root,
+        text="Eliminar Donador",
+        width=25,
+        command=lambda: eliminarDonadorAux(donadores)
+    ).pack(pady=5)
+    tk.Button(
+        root,
+        text="Insertar Lugar de Donación",
+        width=25,
+        command=insertarLugarDonacionAux
+    ).pack(pady=5)
+    tk.Button(
+        root,
+        text="Reportes",
+        width=25,
+        command=lambda: submenuReportes(root)
+    ).pack(pady=5)
+
+    tk.Button(
+        root,
+        text="Salir",
+        width=25,
+        command=root.destroy
+    ).pack(pady=20)
+
     root.mainloop()
 
 
@@ -371,18 +403,20 @@ def procesarReportePorProvinciaHtml(idProvinciaSeleccionada, pdonadores, pprovin
     filasHtml = ""
     contadorFilas = 0
     for donador in pdonadores:
-        idProvinciaDonador = str(donador[5]) 
+        cedula = str(donador[1])
+        idProvinciaDonador = cedula[0]
         if idProvinciaDonador == idProvinciaSeleccionada:
             contadorFilas += 1
-            cedula = donador[0]
-            nombreCompleto = f"{donador[1]} {donador[2]} {donador[3]}"
-            tipoSangre = donador[4]
+            cedula = donador[1]
+            idProvinciaDonador = str(cedula)[0]
+            nombreCompleto = " ".join(donador[0])
             lugarDonacion = donador[6]
-            estado = "Activo" if donador[7] == 1 else "Inactivo"
+            tipoSangreStr = tipoSangre[donador[2]]
+            estado = "Activo" if donador[8] == 1 else "Inactivo"
             filasHtml += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
-            <td>{tipoSangre}</td>
+            <td>{tipoSangreStr}</td>
             <td>{lugarDonacion}</td>
             <td>{estado}</td>
         </tr>\n"""
@@ -466,14 +500,14 @@ def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias
     filasHtml = ""
     contadorFilas = 0
     for donador in pdonadores:
-        tipoSangre = donador[4]
-        if tipoSangre == tipoSangreSeleccionado:
+        tipoSangreDonador = tipoSangre[donador[2]]
+        if tipoSangreDonador == tipoSangreSeleccionado:
             contadorFilas += 1
-            cedula = donador[0]
-            nombreCompleto = f"{donador[1]} {donador[2]} {donador[3]}"
-            idProvincia = str(donador[5])
+            cedula = donador[1]
+            nombreCompleto = " ".join(donador[0])
+            idProvincia = str(donador[1])[0]
             lugarDonacion = donador[6]
-            estado = "Activo" if donador[7] == 1 else "Inactivo"
+            estado = "Activo" if donador[8] == 1 else "Inactivo"
             nombreProvincia = pprovincias.get(idProvincia, ["Desconocida"])[0]
             filasHtml += f"""        <tr>
             <td>{cedula}</td>
@@ -560,12 +594,12 @@ def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreP
     filasHtml = ""
     contadorFilas = 0
     for donador in pdonadores:
-        cedula = str(donador[0])
-        tipoSangreDonador = donador[4]
-        estado = donador[7] # 1 es Activo
+        cedula = str(donador[1])
+        tipoSangreDonador = tipoSangre[donador[2]]
+        estado = donador[8] # 1 es Activo
         if estado == 1 and cedula[0] == pclaveProvincia and tipoSangreDonador == ptipoSangre:
             contadorFilas += 1
-            nombreCompleto = f"{donador[1]} {donador[2]} {donador[3]}"
+            nombreCompleto = " ".join(donador[0])
             lugarDonacion = donador[6]
             filasHtml += f"""        <tr>
             <td>{cedula}</td>
@@ -645,6 +679,31 @@ def reporteTipoSangreProvinciaAux(pcomboProvincia, pcomboSangre, pdonadores, ppr
     except Exception as error:
         messagebox.showerror("Error", f"Ocurrió un fallo inesperado al construir el reporte: {str(error)}")
 
+def ventanaReporteTipoSangreProvincia():
+    ventana = tk.Toplevel()
+    comboProvincia = ttk.Combobox(
+        ventana,
+        values=[datos[0] for datos in provinciasDiccionario.values()],
+        state="readonly"
+    )
+    comboProvincia.pack()
+    comboSangre = ttk.Combobox(
+        ventana,
+        values=tipoSangre,
+        state="readonly"
+    )
+    comboSangre.pack()
+    tk.Button(
+        ventana,
+        text="Generar",
+        command=lambda: reporteTipoSangreProvinciaAux(
+            comboProvincia,
+            comboSangre,
+            donadores,
+            provinciasDiccionario
+        )
+    ).pack()
+
 # reporte 4
 
 def validarMatrizDonadoresReporteGeneral(pdonadores):
@@ -663,13 +722,13 @@ def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
         filasProvincia = ""
         contadorProvincia = 0
         for donador in pdonadores:
-            cedula = str(donador[0])
-            estado = donador[7]  
+            cedula = str(donador[1])
+            estado = donador[8]  
             if estado == 1 and cedula[0] == claveProvincia:
                 contadorProvincia += 1
                 contadorTotalDonadores += 1
-                nombreCompleto = f"{donador[1]} {donador[2]} {donador[3]}"
-                tipoSangreDonador = donador[4]
+                nombreCompleto = " ".join(donador[0])
+                tipoSangreDonador = tipoSangre[donador[2]]
                 lugarDonacion = donador[6]
                 filasProvincia += f"""        <tr>
             <td>{cedula}</td>
@@ -770,18 +829,19 @@ def procesarReporteMujeresOMinusculasHtml(pDonadores):
     for donador in pDonadores:
         if len(donador) < 10:
             continue
-        tipoSangreDonador = donador[4]
-        estadoActivo = donador[7]  
-        sexoDonador = str(donador[8]).upper().strip()
-        fechaNacimientoStr = donador[9]
-        if estadoActivo == 1 and sexoDonador == "F" and tipoSangreDonador == "O-":
+        tipoSangreStr = tipoSangre[donador[2]]
+        estadoActivo = donador[8]  
+        sexoDonador = "F" if donador[3] == False else "M"
+        tuplaFecha = donador[4]
+        fechaNacimientoStr = f"{tuplaFecha[0]:02d}/{tuplaFecha[1]:02d}/{tuplaFecha[2]}"
+        if estadoActivo == 1 and sexoDonador == "F" and tipoSangreStr == "O-":
             edadCalculada = calcularEdadExacta(fechaNacimientoStr)
             if edadCalculada < 45:
                 listaFiltrada.append({
-                    "cedula": donador[0],
-                    "nombreCompleto": f"{donador[1]} {donador[2]} {donador[3]}",
+                    "cedula": donador[1],
+                    "nombreCompleto": " ".join(donador[0]),
                     "fechaNacimiento": fechaNacimientoStr,
-                    "telefono": donador[5],
+                    "telefono": donador[7],
                     "correo": donador[6],
                     "edad": edadCalculada
                 })
@@ -900,15 +960,17 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
         filasProvincia = ""
         contadorProvincia = 0
         for donador in pDonadores:
-            cedula = str(donador[0])
-            tipoDonador = donador[4]
-            estado = donador[7]  
-            if estado == 1 and cedula[0] == claveProvincia and esDonadorCompatible(tipoDonador, pTipoReceptor):
+            cedula = str(donador[1])
+            tipoDonador = tipoSangre[donador[2]]
+            idProvinciaDonador = cedula[0]
+            estado = donador[8]  
+            if estado == 1 and idProvinciaDonador == claveProvincia and esDonadorCompatible(tipoDonador, pTipoReceptor):
+
                 contadorProvincia += 1
                 contadorTotalDonadores += 1
-                nombreCompleto = f"{donador[1]} {donador[2]} {donador[3]}"
-                telefono = donador[5] if len(donador) > 5 else "N/A"
-                correo = donador[6] if len(donador) > 6 else "N/A"
+                nombreCompleto = " ".join(donador[0])
+                telefono = donador[7]
+                correo = donador[6]
                 filasProvincia += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
@@ -1049,16 +1111,16 @@ def procesarReporteCompatibilidadHtml(pDonadores, pTipoSangreObjetivo):
     for donador in pDonadores:
         if len(donador) < 8:
             continue  
-        tipoSangreDonador = donador[4]
-        estadoActivo = donador[7] 
-        cedulaStr = str(donador[0])
+        tipoSangreDonador = tipoSangre[donador[2]]
+        estadoActivo = donador[8] 
+        cedulaStr = str(donador[1])
         if estadoActivo == 1 and (tipoSangreDonador in tiposCompatibles):
-            codigoProvincia = cedulaStr.split('-')[0].strip() if '-' in cedulaStr else cedulaStr[0]
+            codigoProvincia = cedulaStr[0]
             listaCompatibles.append({
-                "cedula": donador[0],
-                "nombreCompleto": f"{donador[1]} {donador[2]} {donador[3]}",
+                "cedula": donador[1],
+                "nombreCompleto": " ".join(donador[0]),
                 "tipoSangre": tipoSangreDonador,
-                "telefono": donador[5],
+                "telefono": donador[7],
                 "correo": donador[6],
                 "provinciaId": codigoProvincia
             })
@@ -1179,5 +1241,163 @@ def reporteCompatibilidadRecibirAux(pDonadores, pTipoSangreTupla):
         command=ventanaCompatibilidad.destroy
     )
     btnRegresar.pack(side="left", padx=10)
+
+# Donadores inactvos
+def validarDonadoresInactivos(pmatrizDonadores):
+    if not pmatrizDonadores:
+        return False
+    for donador in pmatrizDonadores:
+        if donador[8] == 0:  
+            return True
+    return False
+
+def procesarReporteInactivos(pmatrizDonadores):
+    fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M:%S %p")
+    nombreArchivo = "reporteDonadoresInactivos.html"
+
+    try:
+        with open(nombreArchivo, "w", encoding="utf-8") as archivoHtml:
+            archivoHtml.write("<!DOCTYPE html>\n<html lang='es'>\n<head>\n")
+            archivoHtml.write("    <meta charset='UTF-8'>\n")
+            archivoHtml.write("    <title>Reporte de Donadores Excluidos</title>\n")
+            archivoHtml.write("    <style>\n")
+            archivoHtml.write("        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }\n")
+            archivoHtml.write("        h1 { color: #b30000; text-align: center; }\n")
+            archivoHtml.write("        .info-sistema { text-align: center; margin-bottom: 20px; color: #555; }\n")
+            archivoHtml.write("        table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: #fff; }\n")
+            archivoHtml.write("        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }\n")
+            archivoHtml.write("        th { background-color: #b30000; color: white; }\n")
+            archivoHtml.write("        tr:nth-child(even) { background-color: #f2f2f2; }\n")
+            archivoHtml.write("    </style>\n</head>\n<body>\n")
+            archivoHtml.write("    <h1>Reporte de Donadores No Activos (Excluidos)</h1>\n")
+            archivoHtml.write(f"    <div class='info-sistema'><strong>Fecha y Hora del Sistema:</strong> {fechaHoraActual}</div>\n")
+            archivoHtml.write("    <table>\n        <thead>\n            <tr>\n")
+            archivoHtml.write("                <th>Cédula</th>\n                <th>Nombre Completo</th>\n")
+            archivoHtml.write("                <th>Tipo Sangre</th>\n                <th>Fecha Nacimiento</th>\n")
+            archivoHtml.write("                <th>Peso</th>\n                <th>Sexo</th>\n")
+            archivoHtml.write("                <th>Teléfono</th>\n                <th>Correo</th>\n")
+            archivoHtml.write("                <th>Justificación de Exclusión</th>\n")
+            archivoHtml.write("            </tr>\n        </thead>\n        <tbody>\n")
+
+            for donador in pmatrizDonadores:
+                estado = donador[8]
+                if estado != 0:
+                    continue  # 👈 saltar activos
+
+                cedula = donador[1]
+                nombreCompleto = " ".join(donador[0])
+                tipoSangreStr = tipoSangre[donador[2]]  
+                sexo = "F" if donador[3] == False else "M"
+                tuplaFecha = donador[4]
+                fechaNacimiento = f"{tuplaFecha[0]:02d}/{tuplaFecha[1]:02d}/{tuplaFecha[2]}"
+                peso = donador[5]
+                correo = donador[6]
+                telefono = donador[7]
+                justificacion=donador[9]
+                archivoHtml.write("            <tr>\n")
+                archivoHtml.write(f"                <td>{cedula}</td>\n")
+                archivoHtml.write(f"                <td>{nombreCompleto}</td>\n")
+                archivoHtml.write(f"                <td>{tipoSangreStr}</td>\n")
+                archivoHtml.write(f"                <td>{fechaNacimiento}</td>\n")
+                archivoHtml.write(f"                <td>{peso} kg</td>\n")
+                archivoHtml.write(f"                <td>{sexo}</td>\n")
+                archivoHtml.write(f"                <td>{telefono}</td>\n")
+                archivoHtml.write(f"                <td>{correo}</td>\n")
+                archivoHtml.write(f"                <td><strong>{justificacion}</strong></td>\n")
+                archivoHtml.write("            </tr>\n")
+            archivoHtml.write("        </tbody>\n    </table>\n</body>\n</html>")
+        webbrowser.open(nombreArchivo)  
+        return True
+    except Exception as e:
+        print(f"Error al generar reporte: {e}")  
+        return False
+
+# submenu reportes
+def submenuReportes(pventanaPadre):
+
+    ventanaReportes = tk.Toplevel(pventanaPadre)
+
+    ventanaReportes.title("Menú de Reportes")
+    ventanaReportes.geometry("450x500")
+    ventanaReportes.resizable(False, False)
+
+    tk.Label(
+        ventanaReportes,
+        text="Menú de Reportes",
+        font=("Arial", 14, "bold")
+    ).pack(pady=15)
+
+    tk.Button(
+        ventanaReportes,
+        text="1. Donadores por Provincia",
+        width=35,
+        command=lambda: reportePorProvinciaAux(donadores)
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="2. Donadores por Tipo de Sangre",
+        width=35,
+        command=lambda: reportePorSangreAux(donadores)
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="3. Tipo de Sangre por Provincia",
+        width=35,
+        command=lambda: ventanaReporteTipoSangreProvincia()
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="4. Reporte General de Donadores",
+        width=35,
+        command=lambda: reporteGeneralDonadoresAux(
+            donadores,
+            provinciasDiccionario
+        )
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="5. Mujeres O- Menores de 45",
+        width=35,
+        command=lambda: reporteMujeresOMinusculasAux(donadores)
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="6. ¿A quién puede donar?",
+        width=35,
+        command=lambda: reporteCompatibilidadDonacionAux(
+            donadores,
+            provinciasDiccionario,
+            tipoSangre
+        )
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="7. Compatibilidad para recibir",
+        width=35,
+        command=lambda: reporteCompatibilidadRecibirAux(
+            donadores,
+            tipoSangre
+        )
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="8. Donadores Inactivos",
+        width=35,
+        command=lambda: procesarReporteInactivos(donadores)
+    ).pack(pady=3)
+
+    tk.Button(
+        ventanaReportes,
+        text="Regresar",
+        width=35,
+        command=ventanaReportes.destroy
+    ).pack(pady=15)
 
 menuPrincipal()
