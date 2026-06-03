@@ -143,13 +143,15 @@ def actualizarDonanteAux(pbaseDatos):
             messagebox.showwarning("Aviso", "Correo no permitido.\nSolo se aceptan dominios: @costarricense.cr, @racsa.go.cr, @ccss.sa.cr o @gmail.com")
             return
         # Búsqueda Binaria para ver si existe para poder actualizar
-        existe, posicion = validarDonante(pcedula=cedula, pmatriz=pbaseDatos)
+        cedulaInt = int(cedula.replace("-", ""))
+        existe, posicion = validarDonante(pcedula=cedulaInt, pmatriz=pbaseDatos)
+        print(cedulaInt)
         if not existe:
             messagebox.showwarning("Aviso", f"La cédula {cedula} no se encuentra registrada en el sistema.")
             return
         confirmacion = messagebox.askyesno("Confirmar acción", f"¿Está seguro de que desea inactivar al donador con cédula {cedula}?")
         if confirmacion:
-            nuevoRegistro = [normalizarNombre(nombre), cedula, tuplaFecha, tipoSangre, sexo, int(peso), telefono, correo]
+            nuevoRegistro = [normalizarNombre(nombre), cedulaInt, tuplaFecha, tipoSangre, sexo, int(peso), telefono, correo]
             pbaseDatos[posicion]=nuevoRegistro
             actualizarMatrizEnArchivo(pbaseDatos)
             messagebox.showinfo("Información", "Donador actualizado satisfactoriamente.")
@@ -221,3 +223,8 @@ def actualizarDonanteAux(pbaseDatos):
     tk.Button(marcoBotones, text="Regresar", command=lambda:ventana.destroy(), width=10, cursor="hand2").pack(side="left", padx=5)
     ventana.mainloop()
     return pbaseDatos
+
+generarDonantesAux(baseDatos)
+print(baseDatos)
+actualizarDonanteAux(baseDatos)
+print(baseDatos)

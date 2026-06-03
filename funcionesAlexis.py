@@ -54,11 +54,11 @@ def validarDonante(pmatriz,pcedula):
     -pmatriz: matriz con pacientes
     -pcedula: cedula del paciente
     """
-    for i in range(len(pmatriz)):
-
-        if pmatriz[i][1]==pcedula:
+    for i, persona in enumerate(pmatriz):
+        if persona[1] == pcedula:
             return True, i
-    return False, i
+
+    return False, -1
 
 
 def generarCedula(pdonantes):
@@ -69,32 +69,30 @@ def generarCedula(pdonantes):
     """
     prob=random.randint(1,100)
     if prob>=1 and prob<=40:
-        cedula="1-"
+        cedula="1"
     elif prob>40 and prob<=60:
-        cedula="2-"
+        cedula="2"
     elif prob>60 and prob<=72:
-        cedula="3-"
+        cedula="3"
     elif prob>72 and prob<=79:
-        cedula="4-"
+        cedula="4"
     elif prob>79 and prob<=85:
-        cedula="5-"
+        cedula="5"
     elif prob>85 and prob<=92:
-        cedula="6-"
+        cedula="6"
     elif prob>92 and prob<=97:
-        cedula="7-"
+        cedula="7"
     elif prob==98:
-        cedula="8-"
+        cedula="8"
     else:
-        cedula="9-"
+        cedula="9"
     for i in range(8):
         cedula+=str(random.randint(0,9))
-        if i==3:
-            cedula+="-"
     if pdonantes==[]:
-        return cedula
+        return int(cedula)
     if validarDonante(pdonantes, cedula)[0]:
         generarCedula(pdonantes)
-    return cedula
+    return int(cedula)
 
 def generarTipoSangre():
     """
