@@ -615,54 +615,88 @@ def reportePorProvinciaAux(pdonadores):
     
 # reporte 2
 
-def validarSeleccionSangre(tipoSangre):
+def validarEdad(pEdad):
     """
-    funcion:
-    Valida que el usuario haya seleccionado un tipo de sangre.
+    funcion: Verifica que la edad sea un entero entre 18 y 65.
     entradas:
-    - tipoSangre: cadena con el tipo de sangre seleccionado.
+    - pEdad: valor ingresado por el usuario.
     salidas:
-    - True si existe una selección.
-    - False en caso contrario.
+    - True si es válida, False en caso contrario.
     """
-    if not tipoSangre:
-        messagebox.showwarning("Validación", "Debe seleccionar un tipo de sangre de la lista.")
+    try:
+        edad = int(pEdad)
+        return 18 <= edad <= 65
+    except ValueError:
         return False
-    return True
 
-def reportePorSangreAux(pdonadores):
+
+def reportePorRangoEdadAux(pdonadores):
     """
-    funcion:
-    Despliega la ventana para seleccionar un tipo de sangre y generar el reporte.
+    funcion: Muestra la ventana para ingresar un rango de edad y generar el reporte.
     entradas:
-    - pdonadores: matriz con los registros de donadores.
+    - pdonadores: matriz de donadores.
     salidas:
-    - Ventana para generar el reporte.
+    - Ninguna.
     """
     if not pdonadores:
         messagebox.showwarning("Aviso", "No hay donadores registrados en el sistema.")
         return
     ventanaFiltro = tk.Toplevel()
-    ventanaFiltro.title("Filtrar por Sangre")
-    ventanaFiltro.geometry("300x200")
+    ventanaFiltro.title("Reporte por Rango de Edad")
+    ventanaFiltro.geometry("350x220")
     ventanaFiltro.resizable(False, False)
-    tk.Label(ventanaFiltro, text="Seleccione el tipo de sangre:").pack(pady=15)
-    opcionesSangre = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
-    comboSangre = ttk.Combobox(ventanaFiltro, values=opcionesSangre, state="readonly", width=15)
-    comboSangre.pack(pady=5)
+    tk.Label(ventanaFiltro, text="Reporte por Rango de Edad",
+             font=("Arial", 12, "bold")).pack(pady=(15, 10))
+    marco = tk.Frame(ventanaFiltro)
+    marco.pack(padx=20, pady=5)
+    tk.Label(marco, text="Edad inicial:", anchor="w", width=12).grid(row=0, column=0, sticky="w", pady=8)
+    entradaEdadInicial = tk.Entry(marco, width=10)
+    entradaEdadInicial.grid(row=0, column=1, sticky="w", pady=8)
+    tk.Label(marco, text="Edad final:", anchor="w", width=12).grid(row=1, column=0, sticky="w", pady=8)
+    entradaEdadFinal = tk.Entry(marco, width=10, state="disabled")
+    entradaEdadFinal.grid(row=1, column=1, sticky="w", pady=8)
+    def alCambiarEdadInicial(event):
+        """
+        funcion: Habilita la segunda caja solo si la primera tiene un valor válido.
+        entradas: event (evento de teclado).
+        salidas: Ninguna.
+        """
+        if validarEdad(entradaEdadInicial.get().strip()):
+            entradaEdadFinal.config(state="normal")
+        else:
+            entradaEdadFinal.delete(0, tk.END)
+            entradaEdadFinal.config(state="disabled")
+    entradaEdadInicial.bind("<KeyRelease>", alCambiarEdadInicial)
+
     def ejecutarReporte():
         """
-        funcion:
-        Obtiene el tipo de sangre seleccionado y genera el reporte correspondiente.
-        entradas:
-        - Ninguna.
-        salidas:
-        - Reporte HTML por tipo de sangre.
+        funcion: Valida ambas edades y ejecuta la generación del reporte.
+        entradas: Ninguna.
+        salidas: Ninguna.
         """
-        seleccion = comboSangre.get()
-        if validarSeleccionSangre(seleccion):
-            procesarReportePorSangreHtml(seleccion, pdonadores, provinciasDiccionario)
+        edadInicialStr = entradaEdadInicial.get().strip()
+        edadFinalStr = entradaEdadFinal.get().strip()
+        if not validarEdad(edadInicialStr):
+            messagebox.showwarning("Aviso", "La edad inicial debe ser un número entero entre 18 y 65.")
+            return
+        edadInicial = int(edadInicialStr)
+        if not edadFinalStr:
+            edadFinal = edadInicial
+        else:
+            if not validarEdad(edadFinalStr):
+                messagebox.showwarning("Aviso", "La edad final debe ser un número entero entre 18 y 65.")
+                return
+            edadFinal = int(edadFinalStr)
+            if edadFinal < edadInicial:
+                messagebox.showwarning("Aviso", "La edad final no puede ser menor que la edad inicial.")
+                return
+
+        resultado = procesarReportePorRangoEdadHtml(pdonadores, edadInicial, edadFinal)
+        if resultado:
+            messagebox.showinfo("Éxito", "Reporte creado satisfactoriamente.")
             ventanaFiltro.destroy()
+        else:
+            messagebox.showerror("Error", "Reporte no creado.")
     marcoBotones = tk.Frame(ventanaFiltro)
     marcoBotones.pack(pady=15)
     tk.Button(marcoBotones, text="Generar Reporte", command=ejecutarReporte, width=15).pack(side="left", padx=5)
@@ -864,7 +898,9 @@ def validarFiltroCompatibilidadDonacion(pTipoSangreSeleccionado):
 def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSangreTupla):
     """
     Funcionalidad:
-    Despliega la ventana de selección y coordina la generación del reporte de compatibilidad de donación.
+    Despliega la ventana de selección y coordina la generación del reporte
+    de compatibilidad de donación. El usuario selecciona el tipo de sangre
+    del DONADOR y el reporte muestra a qué receptores puede donar.
     Entradas:
     - pDonadores (list): Matriz de donadores registrados.
     - pProvinciasDiccionario (dict): Diccionario de provincias.
@@ -877,34 +913,27 @@ def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSa
     ventanaCompatibilidad.geometry("360x220")
     ventanaCompatibilidad.resizable(False, False)
     tk.Label(
-        ventanaCompatibilidad, 
-        text="Seleccione el Tipo de Sangre del Receptor:", 
+        ventanaCompatibilidad,
+        text="Seleccione el Tipo de Sangre del DONADOR:",
         font=("Arial", 10, "bold")
     ).pack(pady=(20, 5))
     comboSangre = ttk.Combobox(
-        ventanaCompatibilidad, 
-        values=pTipoSangreTupla, 
-        state="readonly", 
+        ventanaCompatibilidad,
+        values=pTipoSangreTupla,
+        state="readonly",
         width=20
     )
     comboSangre.pack(pady=10)
     marcoBotones = tk.Frame(ventanaCompatibilidad)
     marcoBotones.pack(pady=20)
-    
+
     def ejecutarAccionGenerar():
-        """
-        Funcionalidad:
-        Ejecuta el proceso de validación y generación del reporte de compatibilidad de donación según el tipo de sangre seleccionado por el usuario.
-        Entradas:
-        - Ninguna. Utiliza las variables disponibles en el ámbito de la ventana.
-        Salidas:
-        - Ninguna.
-        """
         seleccionSangre = comboSangre.get().strip()
         if not validarFiltroCompatibilidadDonacion(seleccionSangre):
-            return  
+            return
         if not pDonadores:
             messagebox.showwarning("Aviso", "No hay donadores registrados en el sistema.")
+            return
         fueCreadoExitosamente = procesarReporteCompatibilidadDonacionHtml(
             pDonadores, pProvinciasDiccionario, seleccionSangre
         )
@@ -913,20 +942,10 @@ def reporteCompatibilidadDonacionAux(pDonadores, pProvinciasDiccionario, pTipoSa
             ventanaCompatibilidad.destroy()
         else:
             messagebox.showerror("Error", "Reporte no creado.")
-    btnGenerar = tk.Button(
-        marcoBotones, 
-        text="Generar reporte", 
-        width=15, 
-        command=ejecutarAccionGenerar
-    )
-    btnGenerar.pack(side="left", padx=5)
-    btnRegresar = tk.Button(
-        marcoBotones, 
-        text="Regresar", 
-        width=15, 
-        command=lambda: ventanaCompatibilidad.destroy()
-    )
-    btnRegresar.pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Generar reporte", width=15,
+              command=ejecutarAccionGenerar).pack(side="left", padx=5)
+    tk.Button(marcoBotones, text="Regresar", width=15,
+              command=lambda: ventanaCompatibilidad.destroy()).pack(side="left", padx=5)
 
 # reporte 7
 
@@ -1046,9 +1065,9 @@ def submenuReportes(pventanaPadre):
     ).pack(pady=3)
     tk.Button(
         ventanaReportes,
-        text="2. Donadores por Tipo de Sangre",
+        text="2. Donadores por Rango de Edad",
         width=35,
-        command=lambda: reportePorSangreAux(donadores)
+        command=lambda: reportePorRangoEdadAux(donadores)
     ).pack(pady=3)
     tk.Button(
         ventanaReportes,

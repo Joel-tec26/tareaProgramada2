@@ -459,49 +459,58 @@ def procesarReportePorProvinciaHtml(idProvinciaSeleccionada, pdonadores, pprovin
     webbrowser.open(nombreArchivo)
 
 #2
-def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias):
+def procesarReportePorRangoEdadHtml(pdonadores, pEdadInicial, pEdadFinal):
     """
-    funcion:
-    Genera un reporte HTML con los donadores de un tipo de sangre específico.
+    funcion: Genera un reporte HTML con donadores cuya edad esté dentro del rango indicado.
     entradas:
-    - tipoSangreSeleccionado: tipo de sangre a consultar.
-    - pdonadores: matriz con los registros de donadores.
-    - pprovincias: diccionario con las provincias.
+    - pdonadores: matriz de donadores.
+    - pEdadInicial: edad mínima del rango.
+    - pEdadFinal: edad máxima del rango.
     salidas:
-    - Archivo HTML generado y abierto en el navegador.
+    - True si el reporte fue generado correctamente, False en caso contrario.
     """
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
+    formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     filasHtml = ""
     contadorFilas = 0
+
     for donador in pdonadores:
-        tipoSangreDonador = tipoSangre[donador[2]]
-        if tipoSangreDonador == tipoSangreSeleccionado:
+        tuplaFecha = donador[4]
+        fechaNacStr = f"{tuplaFecha[0]:02d}/{tuplaFecha[1]:02d}/{tuplaFecha[2]}"
+        edad = calcularEdadExacta(fechaNacStr)
+
+        if pEdadInicial <= edad <= pEdadFinal:
             contadorFilas += 1
             cedula = donador[1]
             nombreCompleto = " ".join(donador[0])
-            idProvincia = str(donador[1])[0]
-            lugarDonacion = donador[6]
-            estado = "Activo" if donador[8] == 1 else "Inactivo"
-            nombreProvincia = pprovincias.get(idProvincia, ["Desconocida"])[0]
+            telefono = donador[7]
+            correo = donador[6]
             filasHtml += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
-            <td>{nombreProvincia}</td>
-            <td>{lugarDonacion}</td>
-            <td>{estado}</td>
+            <td>{fechaNacStr}</td>
+            <td>{edad} años</td>
+            <td>{telefono}</td>
+            <td>{correo}</td>
         </tr>\n"""
+
     if contadorFilas == 0:
-        messagebox.showinfo("Información", f"No se encontraron donadores con tipo de sangre {tipoSangreSeleccionado}.")
-        return
+        messagebox.showinfo("Información",
+            f"No se encontraron donadores con edad entre {pEdadInicial} y {pEdadFinal} años.")
+        return False
+
+    tituloRango = (f"Edad: {pEdadInicial} años" if pEdadInicial == pEdadFinal
+                   else f"Edades entre {pEdadInicial} y {pEdadFinal} años")
 
     htmlCompleto = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte - Tipo {tipoSangreSeleccionado}</title>
+    <title>Reporte por Rango de Edad</title>
     <style>
         body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #f4f7f6; }}
         h1 {{ color: #2c3e50; text-align: center; margin-bottom: 5px; }}
+        h2 {{ color: #7f8c8d; text-align: center; font-weight: normal; margin-top: 0; }}
         .fecha-reporte {{ text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 25px; }}
         .info {{ font-weight: bold; margin-bottom: 15px; color: #555; }}
         table {{ width: 100%; border-collapse: collapse; background-color: #ffffff; }}
@@ -511,18 +520,19 @@ def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias
     </style>
 </head>
 <body>
-    <h1>Donadores con Tipo de Sangre: {tipoSangreSeleccionado}</h1>
+    <h1>Reporte por Rango de Edad</h1>
+    <h2>{tituloRango}</h2>
     <div class="fecha-reporte">Reporte generado el: {fechaHoraActual}</div>
-    
     <div class="info">Total de registros encontrados: {contadorFilas}</div>
     <table>
         <thead>
             <tr>
                 <th>Cédula</th>
                 <th>Nombre Completo</th>
-                <th>Provincia</th>
-                <th>Lugar de Donación</th>
-                <th>Estado</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Edad</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
             </tr>
         </thead>
         <tbody>
@@ -531,10 +541,14 @@ def procesarReportePorSangreHtml(tipoSangreSeleccionado, pdonadores, pprovincias
 </body>
 </html>
 """
-    nombreArchivo = f"reporte_donadores_{tipoSangreSeleccionado}.html"
-    with open(nombreArchivo, "w", encoding="utf-8") as archivo:
-        archivo.write(htmlCompleto)
-    webbrowser.open(nombreArchivo)
+    nombreArchivo = f"reporteRangoEdad_{pEdadInicial}a{pEdadFinal}_{formatoFechaArchivo}.html"
+    try:
+        with open(nombreArchivo, "w", encoding="utf-8") as archivo:
+            archivo.write(htmlCompleto)
+        webbrowser.open(nombreArchivo)
+        return True
+    except Exception:
+        return False
 
 #3
 def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreProvincia, ptipoSangre):
@@ -618,7 +632,7 @@ def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreP
 def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
     """
     funcion:
-    Genera un reporte HTML general con todos los donadores activos agrupados por provincia.
+    Genera un reporte HTML con todos los donadores ACTIVOS agrupados por provincia.
     entradas:
     - pdonadores: matriz con los registros de donadores.
     - pprovinciasDiccionario: diccionario de provincias.
@@ -629,40 +643,51 @@ def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     filasHtml = ""
-    contadorTotalDonadores = 0
+    contadorTotal = 0
     for claveProvincia in sorted(pprovinciasDiccionario.keys()):
         nombreProvincia = pprovinciasDiccionario[claveProvincia][0]
         filasProvincia = ""
         contadorProvincia = 0
         for donador in pdonadores:
             cedula = str(donador[1])
-            estado = donador[8]  
+            estado = donador[8]
             if estado == 1 and cedula[0] == claveProvincia:
                 contadorProvincia += 1
-                contadorTotalDonadores += 1
+                contadorTotal += 1
                 nombreCompleto = " ".join(donador[0])
-                tipoSangreDonador = tipoSangre[donador[2]]
-                lugarDonacion = donador[6]
+                tipoSangreStr = tipoSangre[donador[2]]
+                sexo = "Masculino" if donador[3] == True else "Femenino"
+                tuplaFecha = donador[4]
+                fechaNac = f"{tuplaFecha[0]:02d}/{tuplaFecha[1]:02d}/{tuplaFecha[2]}"
+                peso = donador[5]
+                telefono = donador[7]
+                correo = donador[6]
                 filasProvincia += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
-            <td style="color: #e74c3c; font-weight: bold;">{tipoSangreDonador}</td>
-            <td>{lugarDonacion}</td>
+            <td style="color: #e74c3c; font-weight: bold;">{tipoSangreStr}</td>
+            <td>{fechaNac}</td>
+            <td>{peso} kg</td>
+            <td>{sexo}</td>
+            <td>{telefono}</td>
+            <td>{correo}</td>
         </tr>\n"""
+
         if contadorProvincia > 0:
             filasHtml += f"""        <tr style="background-color: #2c3e50; color: white; font-weight: bold;">
-            <td colspan="4" style="text-align: center;">PROVINCIA: {nombreProvincia.upper()} ({contadorProvincia} activos)</td>
+            <td colspan="8" style="text-align: center;">PROVINCIA: {nombreProvincia.upper()} ({contadorProvincia} activos)</td>
         </tr>\n"""
             filasHtml += filasProvincia
 
-    if contadorTotalDonadores == 0:
+    if contadorTotal == 0:
         messagebox.showinfo("Información", "No se encontraron donadores activos registrados en ninguna provincia.")
         return False
+
     htmlCompleto = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte General de Donadores Activos</title>
+    <title>Lista Completa de Donadores</title>
     <style>
         body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #fdfefe; }}
         h1 {{ color: #c0392b; text-align: center; margin-bottom: 5px; }}
@@ -670,24 +695,27 @@ def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
         .fecha-reporte {{ text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 25px; }}
         .info {{ font-weight: bold; margin-bottom: 15px; color: #333; font-size: 1.1em; }}
         table {{ width: 100%; border-collapse: collapse; background-color: #ffffff; }}
-        th, td {{ border: 1px solid #bdc3c7; text-align: left; padding: 12px; }}
+        th, td {{ border: 1px solid #bdc3c7; text-align: left; padding: 10px; font-size: 0.9em; }}
         th {{ background-color: #e74c3c; color: white; }}
         tr:nth-child(even) {{ background-color: #f9ecec; }}
     </style>
 </head>
 <body>
-    <h1>Reporte General de Donadores</h1>
-    <h2>Distribución Nacional de Donadores Activos</h2>
+    <h1>Lista Completa de Donadores Activos</h1>
+    <h2>Ordenados por Provincia — Día Mundial del Donante de Sangre</h2>
     <div class="fecha-reporte">Reporte generado el: {fechaHoraActual}</div>
-    
-    <div class="info">Total global de donadores activos en el sistema: {contadorTotalDonadores}</div>
+    <div class="info">Total de donadores activos en el sistema: {contadorTotal}</div>
     <table>
         <thead>
             <tr>
                 <th>Cédula</th>
                 <th>Nombre Completo</th>
                 <th>Tipo de Sangre</th>
-                <th>Lugar de Donación</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Peso</th>
+                <th>Sexo</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
             </tr>
         </thead>
         <tbody>
@@ -696,8 +724,7 @@ def procesarReporteGeneralDonadoresHtml(pdonadores, pprovinciasDiccionario):
 </body>
 </html>
 """
-    
-    nombreArchivo = f"reporteGeneral{formatoFechaArchivo}.html"
+    nombreArchivo = f"reporteGeneral_{formatoFechaArchivo}.html"
     try:
         with open(nombreArchivo, "w", encoding="utf-8") as archivo:
             archivo.write(htmlCompleto)
@@ -856,52 +883,67 @@ def esDonadorCompatible(pTipoDonador, pTipoReceptor):
         return pTipoReceptor == "AB+"  # Solo a sí mismo
     return False
 
-def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario, pTipoReceptor):
+def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario, pTipoDonador):
     """
     Funcionalidad:
-    Genera un reporte HTML con los donadores activos compatibles para abastecer a un receptor de un tipo de sangre específico.
+    Genera un reporte HTML con todas las personas activas que pueden recibir
+    sangre de un donador del tipo seleccionado, agrupadas por provincia.
     Entradas:
     - pDonadores (list): Matriz de donadores registrados.
     - pProvinciasDiccionario (dict): Diccionario con la información de provincias.
-    - pTipoReceptor (str): Tipo de sangre del receptor.
+    - pTipoDonador (str): Tipo de sangre del donador seleccionado.
     Salidas:
     - True: Si el reporte fue generado correctamente.
-    - False: Si no se encontraron donadores compatibles o ocurrió un error.
+    - False: Si no se encontraron registros o ocurrió un error.
     """
+    #tipo del donador
+    tablaReceptores = {
+        "O-":  ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
+        "O+":  ["O+", "A+", "B+", "AB+"],
+        "A-":  ["A-", "A+", "AB-", "AB+"],
+        "A+":  ["A+", "AB+"],
+        "B-":  ["B-", "B+", "AB-", "AB+"],
+        "B+":  ["B+", "AB+"],
+        "AB-": ["AB-", "AB+"],
+        "AB+": ["AB+"]
+    }
+    receptoresCompatibles = tablaReceptores.get(pTipoDonador, [])
+    receptoresStr = ", ".join(receptoresCompatibles)
     fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     filasHtml = ""
-    contadorTotalDonadores = 0
+    contadorTotal = 0
     for claveProvincia in sorted(pProvinciasDiccionario.keys()):
         nombreProvincia = pProvinciasDiccionario[claveProvincia][0]
         filasProvincia = ""
         contadorProvincia = 0
         for donador in pDonadores:
             cedula = str(donador[1])
-            tipoDonador = tipoSangre[donador[2]]
-            idProvinciaDonador = cedula[0]
-            estado = donador[8]  
-            if estado == 1 and idProvinciaDonador == claveProvincia and esDonadorCompatible(tipoDonador, pTipoReceptor):
+            tipoSangrePersona = tipoSangre[donador[2]]
+            estado = donador[8]
+            if estado == 1 and cedula[0] == claveProvincia and tipoSangrePersona in receptoresCompatibles:
                 contadorProvincia += 1
-                contadorTotalDonadores += 1
+                contadorTotal += 1
                 nombreCompleto = " ".join(donador[0])
                 telefono = donador[7]
                 correo = donador[6]
                 filasProvincia += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
-            <td style="color: #e74c3c; font-weight: bold;">{tipoDonador}</td>
+            <td style="color: #e74c3c; font-weight: bold;">{tipoSangrePersona}</td>
             <td>{telefono}</td>
             <td>{correo}</td>
         </tr>\n"""
         if contadorProvincia > 0:
             filasHtml += f"""        <tr style="background-color: #2c3e50; color: white; font-weight: bold;">
-            <td colspan="5" style="text-align: center;">PROVINCIA: {nombreProvincia.upper()} ({contadorProvincia} compatibles)</td>
+            <td colspan="5" style="text-align: center;">PROVINCIA: {nombreProvincia.upper()} ({contadorProvincia} personas)</td>
         </tr>\n"""
             filasHtml += filasProvincia
-    if contadorTotalDonadores == 0:
-        messagebox.showinfo("Información", f"No se encontraron donadores activos compatibles para abastecer al tipo {pTipoReceptor}.")
+    if contadorTotal == 0:
+        messagebox.showinfo("Información",
+            f"No se encontraron personas activas que puedan recibir sangre tipo {pTipoDonador}.")
         return False
+
     htmlCompleto = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -911,7 +953,10 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
         body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #fdfefe; }}
         h1 {{ color: #c0392b; text-align: center; margin-bottom: 5px; }}
         h2 {{ color: #2c3e50; text-align: center; margin-top: 0px; font-weight: normal; }}
-        .fecha-reporte {{ text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 25px; }}
+        .receptores {{ text-align: center; background-color: #eaf4fb; border: 1px solid #aed6f1;
+                       border-radius: 6px; padding: 10px; margin-bottom: 20px; 
+                       color: #1a5276; font-weight: bold; }}
+        .fecha-reporte {{ text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 15px; }}
         .info {{ font-weight: bold; margin-bottom: 15px; color: #333; font-size: 1.1em; }}
         table {{ width: 100%; border-collapse: collapse; background-color: #ffffff; }}
         th, td {{ border: 1px solid #bdc3c7; text-align: left; padding: 12px; }}
@@ -921,10 +966,10 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
 </head>
 <body>
     <h1>¿A quién puede donar?</h1>
-    <h2>Donadores Aptos para Abastecer a Receptores Tipo: <b>{pTipoReceptor}</b></h2>
+    <h2>Personas que pueden recibir sangre de un donador tipo: <b>{pTipoDonador}</b></h2>
+    <div class="receptores">Un donador {pTipoDonador} puede abastecer a los tipos: {receptoresStr}</div>
     <div class="fecha-reporte">Reporte generado el: {fechaHoraActual}</div>
-    
-    <div class="info">Total de donadores compatibles encontrados a nivel nacional: {contadorTotalDonadores}</div>
+    <div class="info">Total de personas encontradas a nivel nacional: {contadorTotal}</div>
     <table>
         <thead>
             <tr>
@@ -941,8 +986,8 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
 </body>
 </html>
 """
-    sangreLimpia = pTipoReceptor.replace('+', '_pos').replace('-', '_neg')
-    nombreArchivo = f"reporteCompatibilidad{sangreLimpia}_{formatoFechaArchivo}.html"
+    sangreLimpia = pTipoDonador.replace('+', 'pos').replace('-', 'neg')
+    nombreArchivo = f"reporteQuienPuedeDonar_{sangreLimpia}_{formatoFechaArchivo}.html"
     try:
         with open(nombreArchivo, "w", encoding="utf-8") as archivo:
             archivo.write(htmlCompleto)
@@ -951,7 +996,9 @@ def procesarReporteCompatibilidadDonacionHtml(pDonadores, pProvinciasDiccionario
     except Exception:
         return False
 
+    
 #7
+
 def procesarReporteCompatibilidadHtml(pDonadores, pTipoSangreObjetivo):
     """
     Funcionalidad:
