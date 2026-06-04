@@ -112,8 +112,7 @@ def generarCedula(pdonantes):
     if pdonantes==[]:
         return cedula
     if validarDonante(pdonantes, cedula)[0]:
-        generarCedula(pdonantes)
-    return cedula
+        return generarCedula(pdonantes)
 
 def generarTipoSangre():
     """
@@ -247,22 +246,52 @@ def generarJustificacion():
     """
     return random.randint(1,7)
 
-def generarDonantes(pdonantes,pbaseDatos):
-    donantes=[]
+def generarDonantes(pdonantes, pbaseDatos):
+    """
+    funcion: Genera una lista de donantes con datos aleatorios en el mismo
+    formato que un registro insertado manualmente.
+    entradas:
+    - pdonantes (int): cantidad de donantes a generar.
+    - pbaseDatos (list): matriz actual de donadores, usada para evitar
+      cédulas duplicadas.
+    salidas:
+    - donantes (list): lista de registros generados, donde cada registro
+      es una lista con la siguiente estructura:
+        [0] nombre     (list)  : lista con nombre(s) y apellidos.
+        [1] cedulaInt  (int)   : cédula sin guiones como entero.
+        [2] tipoSangre (int)   : índice del tipo de sangre (0-7).
+        [3] sexo       (bool)  : True = masculino, False = femenino.
+        [4] fechaN     (tuple) : fecha de nacimiento como (dia, mes, anno).
+        [5] peso       (float) : peso en kilogramos.
+        [6] correo     (str)   : correo electrónico.
+        [7] telefono   (str)   : número de teléfono.
+        [8] estado     (int)   : 1 = activo, 0 = inactivo.
+        [9] justific   (int)   : causa de rechazo (1-7), o 0 si activo.
+    """
+    donantes = []
     for i in range(pdonantes):
         nombre, sexo = generarNombreGenero()
-        cedula=generarCedula(pbaseDatos)
-        tipoSangre=generarTipoSangre()
-        fechaN=generarFechaN()
-        peso=generarPeso()
-        correo=generarCorreo(nombre)
-        telefono=generarTelefono()
-        estado=generarEstado()
-        if bool(estado):
-            justific=0
-        else:
-            justific=generarJustificacion()
-        donantes.append([tuple(nombre),cedula,tipoSangre,sexo,fechaN,float(peso),correo,telefono,estado,justific])
+        cedula = generarCedula(pbaseDatos)
+        tipoSangreGen = generarTipoSangre()
+        fechaN = generarFechaN()
+        peso = generarPeso()
+        correo = generarCorreo(nombre)
+        telefono = generarTelefono()
+        estado = generarEstado()
+        justific = 0 if bool(estado) else generarJustificacion()
+        cedulaInt = int(cedula.replace("-", ""))
+        donantes.append([
+            nombre,
+            cedulaInt,
+            tipoSangreGen,
+            sexo,
+            fechaN,
+            float(peso),
+            correo,
+            telefono,
+            estado,
+            justific
+        ])
     return donantes
 
 # joel
@@ -402,7 +431,7 @@ def procesarReportePorProvinciaHtml(idProvinciaSeleccionada, pdonadores, pprovin
             cedula = donador[1]
             idProvinciaDonador = str(cedula)[0]
             nombreCompleto = " ".join(donador[0])
-            lugarDonacion = donador[6]
+            lugarDonacion = obtenerLugarDonacionCorto(str(donador[1]), pprovincias)
             tipoSangreStr = tipoSangre[donador[2]]
             estado = "Activo" if donador[8] == 1 else "Inactivo"
             filasHtml += f"""        <tr>
@@ -551,6 +580,26 @@ def procesarReportePorRangoEdadHtml(pdonadores, pEdadInicial, pEdadFinal):
         return False
 
 #3
+def obtenerLugarDonacionCorto(cedula, pprovincias):
+    """
+    funcion: Obtener los lugares de donación como texto corto para usar en reportes.
+    entradas:
+    - cedula (str/int): cédula de la persona, se convierte a string
+      automáticamente si se recibe como entero.
+    - pprovincias (dict): diccionario de provincias con la estructura
+      { "clave": [nombre_provincia, [lista_de_centros]] }.
+    salidas:
+    - lugares (str): nombres de los centros de donación separados por " / ".
+      Si la cédula inicia con "8" retorna "Sede Central de Donación".
+      Si la provincia no existe retorna "No encontrado."
+    """
+    primerDigito = str(cedula)[0]
+    if primerDigito == "8":
+        return "Sede Central de Donación"
+    if primerDigito in pprovincias:
+        return " / ".join(pprovincias[primerDigito][1])
+    return "No encontrado."
+
 def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreProvincia, ptipoSangre):
     """
     funcion:
@@ -573,7 +622,7 @@ def procesarReporteTipoSangreProvinciaHtml(pdonadores, pclaveProvincia, pnombreP
         if estado == 1 and cedula[0] == pclaveProvincia and tipoSangreDonador == ptipoSangre:
             contadorFilas += 1
             nombreCompleto = " ".join(donador[0])
-            lugarDonacion = donador[6]
+            lugarDonacion = obtenerLugarDonacionCorto(cedula, provinciasDiccionario)
             filasHtml += f"""        <tr>
             <td>{cedula}</td>
             <td>{nombreCompleto}</td>
@@ -768,7 +817,7 @@ def procesarReporteMujeresOMinusculasHtml(pDonadores):
     formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
     listaFiltrada = []
     for donador in pDonadores:
-        if len(donador) < 10:
+        if len(donador) < 9:
             continue
         tipoSangreStr = tipoSangre[donador[2]]
         estadoActivo = donador[8]  
@@ -1198,5 +1247,78 @@ def procesarReporteInactivos(pmatrizDonadores):
         return False
 
 
+# 9
 
+def procesarReporteLugaresDonacionHtml(pDonadores, pProvinciasDiccionario):
+    """
+    funcion: Genera un reporte HTML con los lugares de donación por provincia,
+    ordenados ascendentemente según el Registro Civil del TSE, mostrando
+    la cantidad de donadores registrados (activos e inactivos) y los
+    recintos posibles de recaudación.
+    entradas:
+    - pDonadores (list): matriz con los registros de donadores.
+    - pProvinciasDiccionario (dict): diccionario de provincias con la estructura
+      { "clave": [nombre_provincia, [lista_de_centros]] }.
+    salidas:
+    - True: si el reporte fue generado correctamente.
+    - False: si ocurre un error al escribir el archivo.
+    """
+    fechaHoraActual = datetime.now().strftime("%d/%m/%Y %I:%M %p")
+    formatoFechaArchivo = datetime.now().strftime("%d_%m_%Y_%I_%M_%p")
+    filasHtml = ""
+
+    for clave in sorted(pProvinciasDiccionario.keys()):
+        nombreProvincia = pProvinciasDiccionario[clave][0]
+        recintos = pProvinciasDiccionario[clave][1]
+        cantidadDonadores = sum(1 for donador in pDonadores if str(donador[1])[0] == clave)
+        recintosHtml = "".join(f"<li>{recinto}</li>" for recinto in recintos)
+        filasHtml += f"""        <tr>
+            <td>{nombreProvincia}</td>
+            <td style="text-align: center;">{cantidadDonadores}</td>
+            <td><ul style="margin: 0; padding-left: 18px;">{recintosHtml}</ul></td>
+        </tr>\n"""
+
+    htmlCompleto = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte - Lugares de Donación</title>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background-color: #f9f9f9; }}
+        h1 {{ color: #c0392b; text-align: center; margin-bottom: 5px; }}
+        h2 {{ color: #2c3e50; text-align: center; font-weight: normal; margin-top: 0; }}
+        .fecha-reporte {{ text-align: center; color: #7f8c8d; font-style: italic; margin-bottom: 25px; }}
+        table {{ width: 100%; border-collapse: collapse; background-color: #ffffff; }}
+        th, td {{ border: 1px solid #bdc3c7; text-align: left; padding: 12px; vertical-align: top; }}
+        th {{ background-color: #c0392b; color: white; }}
+        tr:nth-child(even) {{ background-color: #f9ecec; }}
+        ul {{ list-style-type: disc; }}
+    </style>
+</head>
+<body>
+    <h1>Lugares de Donación por Provincia</h1>
+    <h2>Ordenados según el Registro Civil del Tribunal Supremo de Elecciones</h2>
+    <div class="fecha-reporte">Reporte generado el: {fechaHoraActual}</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Provincia</th>
+                <th style="text-align: center;">Donadores Registrados</th>
+                <th>Recintos de Recaudación</th>
+            </tr>
+        </thead>
+        <tbody>
+{filasHtml}        </tbody>
+    </table>
+</body>
+</html>
+"""
+    nombreArchivo = f"reporteLugaresDonacion_{formatoFechaArchivo}.html"
+    try:
+        with open(nombreArchivo, "w", encoding="utf-8") as archivo:
+            archivo.write(htmlCompleto)
+        webbrowser.open(nombreArchivo)
+        return True
+    except Exception:
+        return False
 

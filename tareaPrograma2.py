@@ -185,7 +185,7 @@ def actualizarDonanteAux(pbaseDatos):
         entradaTelefono.delete(0, tk.END)
         entradaCorreo.delete(0, tk.END)
 
-    ventana = tk.Tk()
+    ventana = tk.Toplevel()
     ventana.title("Insertar donador")
     ventana.geometry("550x360")
     tk.Label(ventana, text="Actualizar Donante", font=("Arial", 20)).grid(row=0, column=1, sticky="w", padx=10, pady=5)
@@ -296,6 +296,26 @@ def validarPeso(pesoStr):
         return 50.0 < peso < 120.0
     except ValueError:
         return False
+
+def obtenerLugarDonacionCorto(cedula, pprovincias):
+    """
+    funcion: Obtener los lugares de donación como texto corto para usar en reportes.
+    entradas:
+    - cedula (str/int): cédula de la persona, se convierte a string
+      automáticamente si se recibe como entero.
+    - pprovincias (dict): diccionario de provincias con la estructura
+      { "clave": [nombre_provincia, [lista_de_centros]] }.
+    salidas:
+    - lugares (str): nombres de los centros de donación separados por " / ".
+      Si la cédula inicia con "8" retorna "Sede Central de Donación".
+      Si la provincia no existe retorna "No encontrado."
+    """
+    primerDigito = str(cedula)[0]
+    if primerDigito == "8":
+        return "Sede Central de Donación"
+    if primerDigito in pprovincias:
+        return " / ".join(pprovincias[primerDigito][1])
+    return "No encontrado."
     
 # aux
 def insertarDonadorAux(matrizDonadores, pprovincias):
@@ -1037,6 +1057,22 @@ def validarDonadoresInactivos(pmatrizDonadores):
             return True
     return False
 
+# reporte 9
+def reporteLugaresDonacionAux(pDonadores, pProvinciasDiccionario):
+    """
+    funcion: Coordina la validación y generación del reporte de lugares de donación.
+    entradas:
+    - pDonadores (list): matriz con los registros de donadores.
+    - pProvinciasDiccionario (dict): diccionario de provincias.
+    salidas:
+    - Ninguna.
+    """
+    fueCreadoExitosamente = procesarReporteLugaresDonacionHtml(pDonadores, pProvinciasDiccionario)
+    if fueCreadoExitosamente:
+        messagebox.showinfo("Éxito", "Reporte creado satisfactoriamente.")
+    else:
+        messagebox.showerror("Error", "Reporte no creado.")
+
 # submenu reportes
 def submenuReportes(pventanaPadre):
     """
@@ -1114,6 +1150,12 @@ def submenuReportes(pventanaPadre):
         text="8. Donadores Inactivos",
         width=35,
         command=lambda: procesarReporteInactivos(donadores)
+    ).pack(pady=3)
+    tk.Button(
+    ventanaReportes,
+    text="9. Lugares de Donación",
+    width=35,
+    command=lambda: reporteLugaresDonacionAux(donadores, provinciasDiccionario)
     ).pack(pady=3)
     tk.Button(
         ventanaReportes,
